@@ -11,8 +11,6 @@ class FileController:
 
 
     async def upload_file(self, file):
-        print("FILE")
-        print(file)
         if not file:
                 return self.utils.prueba(msg='No se recibió ningún archivo.'), 400
         

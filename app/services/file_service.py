@@ -22,7 +22,7 @@ class FileService:
             filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + file.filename
             os.makedirs(ubicacion, exist_ok=True)  # Crear la carpeta si no existe
             directory = os.path.join(ubicacion, filename)
-            print(directory)
+            # print(directory)
             with open(directory, 'wb') as f:
                 f.write(await file.read())
             self.guardar_json(version, filename, 'sets')
@@ -53,6 +53,8 @@ class FileService:
                 archivo = glob.glob(os.path.join(ruta_carpeta, '*.xlsx')) + glob.glob(os.path.join(ruta_carpeta, '*.csv'))
             if archivo:
                 archivo_mas_reciente = max(archivo, key=os.path.getctime)
+                print(archivo_mas_reciente)
+                archivo_mas_reciente = archivo_mas_reciente.replace('/', '\\')
                 return archivo_mas_reciente
             else:
                 return None
@@ -102,8 +104,9 @@ class FileService:
 
     def _copia_excel(self, df, nombre_archivo, accion):
         try:
-            df.to_excel('./app/files/cleanData/'+accion+os.path.basename(nombre_archivo), index=False)
-            return "Se ha guardado una copia del DataFrame modificado en un archivo Excel."
+            ruta_archivo = './app/files/cleanData/'+accion+os.path.basename(nombre_archivo)
+            df.to_excel(ruta_archivo, index=False)
+            return "Se ha guardado una copia del DataFrame modificado en un archivo Excel, en " + ruta_archivo
         except Exception as e:
             return f'Error al guardar el documento: {str(e)}'
 

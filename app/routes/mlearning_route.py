@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, UploadFile
 from app.Controllers.processing_controller import ProcessingController
 from app.Controllers.file_controller import FileController
 
+from app.models.todos_model import Todo
 from bson import ObjectId
 from fastapi.responses import JSONResponse
 from fastapi.responses import FileResponse
@@ -22,21 +23,35 @@ async def get_todos():
 
 @todo_api_router.get("/histograma")
 async def get_histogram():
-     imagen_path = "app/files/imgs/histogramas/2023-05-22_19-28-49_histogramas.png"
-     return FileResponse(imagen_path)
+    img_path =  await processing_controller.obtener_histograma()
+    return FileResponse(img_path)
+
+@todo_api_router.get("/matriz-correlacion")
+async def get_matriz_correlacion():
+    img_path =  await processing_controller.obtener_matriz_correlacion()
+    if isinstance(img_path, str):
+        return FileResponse(img_path)
+    else:
+       return img_path
+    
+
+@todo_api_router.get('/descarte')
+def descarte():
+    return processing_controller.descarte()
+
+@todo_api_router.get('/imputacion')
+def imputacion():
+    return processing_controller.imputation_data()
+
+@todo_api_router.get('/generar-imagenes')
+def generar_imagenes():
+    return processing_controller.generar_imagenes_analisis()
+
 # Upload File
 @todo_api_router.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     # Process the uploaded file
     return await file_controller.upload_file(file)
-    file_info = {
-        "filename": file.filename,
-        "content_type": file.content_type,
-    }
-    return {"file_info": file_info}
-
-
-
 
 # post
 @todo_api_router.post("/")
