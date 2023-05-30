@@ -2,7 +2,6 @@ from fastapi import APIRouter, File, UploadFile
 from app.Controllers.processing_controller import ProcessingController
 from app.Controllers.file_controller import FileController
 
-from models.todos_model import Todo
 from bson import ObjectId
 from fastapi.responses import JSONResponse
 from fastapi.responses import FileResponse
