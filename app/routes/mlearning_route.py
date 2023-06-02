@@ -1,4 +1,5 @@
 from fastapi import APIRouter, File, UploadFile
+from app.Controllers.mlearning_controller import MLearningController
 from app.Controllers.processing_controller import ProcessingController
 from app.Controllers.file_controller import FileController
 
@@ -11,6 +12,7 @@ todo_api_router = APIRouter()
 file_controller = FileController()
 
 processing_controller = ProcessingController()
+mlearning_controller = MLearningController()
 
 # retrieve
 @todo_api_router.get("/")
@@ -48,7 +50,7 @@ def generar_imagenes():
     return processing_controller.generar_imagenes_analisis()
 
 # Upload File
-@todo_api_router.post("/upload")
+@todo_api_router.post("/upload", description="Cargar set de datos")
 async def upload_file(file: UploadFile = File(...)):
     # Process the uploaded file
     return await file_controller.upload_file(file)
@@ -70,3 +72,7 @@ async def update_todo(id: str, todo: Todo):
 async def delete_todo(id: str):
     
     return {"status": "ok"}
+
+@todo_api_router.get("/knn")
+async def knn():
+    return mlearning_controller.knn()
