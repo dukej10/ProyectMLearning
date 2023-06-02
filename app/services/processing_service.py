@@ -21,7 +21,7 @@ class ProcessingService:
 
     def descarte_datos(self):
         try:
-            datos = self.mongo_service.obtener_ultimo_registro() 
+            datos = self.mongo_service.obtener_ultimo_registro("Dataset") 
             ruta_archivo = self.file_service.obtener_ultimo_archivo("sets")
             # Lee el archivo Excel o utiliza tu DataFrame existente
             nombre_archivo = os.path.basename(ruta_archivo)
@@ -44,7 +44,7 @@ class ProcessingService:
                         print("Se han descartado las columnas con valores nulos.")
                         # Guarda una copia del DataFrame modificado en un archivo Excel
                     msg= self.file_service._copia_excel(df, ruta_archivo, "descarte-")
-                    self.file_service.guardar_json("descarte", nombre_archivo, 'cleanData')
+                    self.file_service.guardar_archivo_json("descarte", nombre_archivo, 'cleanData', 'Dataset')
                     return self.utils.prueba( msg=msg)
                else:
                     print("No hay columnas con valores nulos.")
@@ -58,7 +58,7 @@ class ProcessingService:
     def imputacion_datos(self):
         try:
             ruta_archivo = self.file_service.obtener_ultimo_archivo("sets")
-            datos = self.mongo_service.obtener_ultimo_registro() 
+            datos = self.mongo_service.obtener_ultimo_registro("Dataset") 
             # Lee el archivo Excel o utiliza tu DataFrame existente
             nombre_archivo = os.path.basename(ruta_archivo)
             if datos:
@@ -83,7 +83,7 @@ class ProcessingService:
                     return "Aún hay valores nulos en el DataFrame."
                 else:
                     print("Se han imputado los valores nulos con la media.")
-                    self.file_service.guardar_json("imputacion", nombre_archivo, 'cleanData')
+                    self.file_service.guardar_archivo_json("imputacion", nombre_archivo, 'cleanData','Dataset')
                     # Guarda una copia del DataFrame modificado en un archivo Excel
                     return self.file_service._copia_excel(df, ruta_archivo, "imputacion-")
             else:

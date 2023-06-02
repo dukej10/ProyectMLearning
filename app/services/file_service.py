@@ -25,7 +25,7 @@ class FileService:
             # print(directory)
             with open(directory, 'wb') as f:
                 f.write(await file.read())
-            self.guardar_json(version, filename, 'sets')
+            self.guardar_archivo_json(version, filename, 'sets', 'Dataset')
             return 'Archivo guardado correctamente.'
         except FileNotFoundError as e:
             return f'Error al guardar el archivo: {str(e)}'
@@ -86,11 +86,11 @@ class FileService:
             print(f'Error al convertir el archivo Excel a JSON: {str(e)}')
             return None
         
-    def guardar_json(self, version, filename, ubicacion):
+    def guardar_archivo_json(self, version, filename, ubicacion, coleccion):
         try:
             json = self.convertir_archivo_a_json(version, filename, ubicacion)
             if json:
-                self.mongo_service.guardar_json(json )
+                self.mongo_service.guardar_json(json, coleccion )
                 # print("ME CONECTÉ")
                 print('Archivo JSON guardado correctamente.')
             else: 
