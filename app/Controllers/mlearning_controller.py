@@ -7,5 +7,4 @@ class MLearningController:
         self.mlearning_service = MLearningService()
 
     def knn(self):
-        self.mlearning_service.knn()
-        return "KNN"
+        return self.mlearning_service.knn()
