@@ -28,16 +28,15 @@ class MLearningService:
     def __init__(self):
         self.mongo_service = MongoDBService()
         self.utils = Utils()
-        self.XTrainKNN = None
-        self.yTrainKNN = None
-        self.XTestKNN = None
-        self.yTestKNN = None
+        self.XTrain = None
+        self.yTrain = None
+        self.XTest = None
+        self.yTest = None
         self.x = None
         self.y = None
         self.modeloKNN = None
         self.modeloRegLog = None
-        self.NameY = None
-        self.yPredictKNN = None
+        self.yPredict = None
         self.dataframe_service = DataframeService()
         self.mongo_service = MongoDBService()
         self.infoEntrenamiento = None
@@ -88,8 +87,8 @@ class MLearningService:
                         self.particion_dataset(dataframe, entrenamiento.cantidad)
                         self.modeloKNN = KNeighborsClassifier(n_neighbors=self.mejor_k())
                         #print(self.XTrainKNN)
-                        self.modeloKNN.fit(self.XTrainKNN,self.yTrainKNN)
-                        self.yPredictKNN = self.modeloKNN.predict(self.XTestKNN)
+                        self.modeloKNN.fit(self.XTrain,self.yTrain)
+                        self.yPredict = self.modeloKNN.predict(self.XTest)
                         #self.identificar_overffing_underffing(self.modeloKNN)
                         if self.obtener_matriz_confusion('knn') is None:
                             return "error"
@@ -112,8 +111,8 @@ class MLearningService:
         self.particion_dataset(dataframe)
         mejores_parametros = self.mejores_parametros_regresion_log()
         self.modeloRegLog = LogisticRegression(**mejores_parametros)
-        self.modeloRegLog.fit(self.XTrainKNN, self.yTrainKNN)
-        self.yPredictKNN = self.modeloRegLog.predict(self.XTestKNN)
+        self.modeloRegLog.fit(self.XTrain, self.yTrain)
+        self.yPredict = self.modeloRegLog.predict(self.XTest)
         self.identificar_overffing_underffing(self.modeloRegLog)
         if self.obtener_matriz_confusion('reg-log') is None:
             return "error"
@@ -130,14 +129,14 @@ class MLearningService:
 
         # Utiliza GridSearchCV para buscar los mejores parámetros
         grid_search = GridSearchCV(model, parameters, cv=5)
-        grid_search.fit(self.XTrainKNN, self.yTrainKNN)
+        grid_search.fit(self.XTrain, self.yTrain)
 
         # Imprime los mejores parámetros encontrados
         print("Mejores parámetros:", grid_search.best_params_)
 
         # Evalúa el modelo con los mejores parámetros en el conjunto de prueba
         best_model = grid_search.best_estimator_
-        accuracy = best_model.score(self.XTestKNN, self.yTestKNN)
+        accuracy = best_model.score(self.XTest, self.yTest)
         print("Exactitud en el conjunto de prueba:", accuracy)
         return  grid_search.best_params_
          
@@ -172,11 +171,11 @@ class MLearningService:
                 print("REDONDEAR")
                 dataNumerica = self.dataframe_service.redondear_datos(dataNumerica)
                 #print(df)
-                print("CONCATENAR")
-                #df = self.dataframe_service.concatenar_datos(dataNumerica, df, entrenamiento.objetivo_y)
-                print(df)
+                # print("CONCATENAR")
+                # #df = self.dataframe_service.concatenar_datos(dataNumerica, df, entrenamiento.objetivo_y)
+                # print(df)
                 print("AQUI ESTA EL DATAFRAME")
-                #print(df)
+                print(df)
                 return df
         except Exception as e:
             print("Error en la preparación del dataframe: ", e)
@@ -207,7 +206,7 @@ class MLearningService:
     def particion_dataset(self, dataframe, porcentaje):
         if porcentaje >1:
             porcentaje = porcentaje/100
-        self.XTrainKNN,self.XTestKNN,self.yTrainKNN,self.yTestKNN=train_test_split(self.x,self.y,test_size=porcentaje, random_state=2)
+        self.XTrain,self.XTest,self.yTrain,self.yTest=train_test_split(self.x,self.y,test_size=porcentaje, random_state=2)
 
     def determinar_x_y(self, dataframe, columnas, objetivo):
         if not isinstance(dataframe, pd.DataFrame):
@@ -226,7 +225,7 @@ class MLearningService:
         grid = GridSearchCV(KNeighborsClassifier(), kvalores)
 
         # Ajustar a los datos de entrenamiento
-        grid.fit(self.XTrainKNN, self.yTrainKNN)
+        grid.fit(self.XTrain, self.yTrain)
 
         # valor óptimo de k
         print("Mejor valor de k: ", grid.best_params_['n_neighbors'])
@@ -235,14 +234,14 @@ class MLearningService:
     def obtener_matriz_confusion(self, nombre_modelo):
         try:
             print("Matriz de confusion")
-            print(self.yTestKNN)
+            print(self.yTest)
             print("/////////////")
-            print(self.yPredictKNN)
+            print(self.yPredict)
             # Convertir self.yTestKNN a una matriz numpy
-            y_test = np.array(self.yTestKNN.values)
+            y_test = np.array(self.yTest.values)
 
             # Asegurarse de que self.yPredictKNN sea una matriz numpy
-            y_pred = np.array(self.yPredictKNN)
+            y_pred = np.array(self.yPredict)
             matrizKNN = confusion_matrix(y_test, y_pred)
             print(matrizKNN)
             sb.heatmap(matrizKNN, annot=True, cmap="Blues")
@@ -265,12 +264,12 @@ class MLearningService:
          stdScore = np.std(scores)
 
          # hacer predicciones en los datos de entrenamiento y prueba
-         yPredTrain = modelo.predict(self.XTrainKNN)
-         yPredTest = modelo.predict(self.XTestKNN)
+         yPredTrain = modelo.predict(self.XTrain)
+         yPredTest = modelo.predict(self.XTest)
 
          # calcular la precisión en los datos de entrenamiento y prueba
-         accuracyTrain = accuracy_score(self.yTrainKNN, yPredTrain)
-         accuracyTest = accuracy_score(self.yTestKNN, yPredTest)
+         accuracyTrain = accuracy_score(self.yTrain, yPredTrain)
+         accuracyTest = accuracy_score(self.yTest, yPredTest)
 
          print("Precisión en los datos de entrenamiento:", accuracyTrain)
          print("Precisión en los datos de prueba:", accuracyTest)
@@ -281,10 +280,10 @@ class MLearningService:
          print('Desviación estándar de la precisión:', stdScore)
 
     def metricas_hold_out(self):
-        accuracy = accuracy_score(self.yTestKNN,self.yPredictKNN) # proporción de predicciones correctas del modelo
-        precision = precision_score(self.yTestKNN,self.yPredictKNN, average = 'weighted') # proporción de predicciones positivas que fueron correctas
-        recall = recall_score(self.yTestKNN, self.yPredictKNN, average = 'weighted') # proporción de positivos reales que se identificaron correctamente
-        f1 = f1_score(self.yTestKNN, self.yPredictKNN, average = 'weighted') # medida armónica de precision y recall
+        accuracy = accuracy_score(self.yTest,self.yPredict) # proporción de predicciones correctas del modelo
+        precision = precision_score(self.yTest,self.yPredict, average = 'weighted') # proporción de predicciones positivas que fueron correctas
+        recall = recall_score(self.yTest, self.yPredict, average = 'weighted') # proporción de positivos reales que se identificaron correctamente
+        f1 = f1_score(self.yTest, self.yPredict, average = 'weighted') # medida armónica de precision y recall
         print(f'Accuracy: {accuracy}')
         print(f'Precision: {precision}')
         print(f'Recall: {recall}')
