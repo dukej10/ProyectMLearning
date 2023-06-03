@@ -76,3 +76,7 @@ async def delete_todo(id: str):
 @todo_api_router.get("/knn")
 async def knn():
     return mlearning_controller.knn()
+
+@todo_api_router.get("/regresion-logistica")
+async def regresion_logistica():
+    return mlearning_controller.reg_logistica()

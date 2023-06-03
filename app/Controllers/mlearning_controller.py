@@ -8,3 +8,6 @@ class MLearningController:
 
     def knn(self):
         return self.mlearning_service.knn()
+    
+    def reg_logistica(self):
+        return self.mlearning_service.regresion_logistica()
