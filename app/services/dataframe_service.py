@@ -24,9 +24,11 @@ class DataframeService:
 
         return dataframe
     
-    def  normalizar_informacion(self, dataframe, tipo):
+    def  normalizar_informacion(self, dataframe, tipo, objetivo_y):
          #print("dataframe")
          dataNumerica = dataframe.select_dtypes(np.number)
+         columnas_no_y = dataNumerica.columns[dataNumerica.columns != objetivo_y]
+         dataNumerica = dataNumerica[columnas_no_y]
          if tipo == "min-max":
           escalador=MinMaxScaler()
           dataNumerica=pd.DataFrame(escalador.fit_transform(dataNumerica), columns = dataNumerica.columns)
@@ -48,8 +50,13 @@ class DataframeService:
          #print(dataNumerica)
          return dataNumerica
     
-    def concatenar_datos(self, dataNumerica, dataframe):
-        dataCategorica = dataframe.select_dtypes(object)
-        dataFinal = pd.concat([dataNumerica, dataCategorica], axis=1)
+    def concatenar_datos(self, dataNumerica, dataframe, objetivo_y):
+        print("dATA")
+        print(dataNumerica.info())
+        
+        dataFinal = pd.concat([dataNumerica, dataframe[objetivo_y]], axis=1)
+        print("DATAFINAL")
+        print(dataFinal.info())
+        print("--------------------")
         return dataFinal
     
