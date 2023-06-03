@@ -27,8 +27,8 @@ class DataframeService:
     def  normalizar_informacion(self, dataframe, tipo, objetivo_y):
          #print("dataframe")
          dataNumerica = dataframe.select_dtypes(np.number)
-         columnas_no_y = dataNumerica.columns[dataNumerica.columns != objetivo_y]
-         dataNumerica = dataNumerica[columnas_no_y]
+     #     columnas_no_y = dataNumerica.columns[dataNumerica.columns != objetivo_y]
+     #     dataNumerica = dataNumerica[columnas_no_y]
          if tipo == "min-max":
           escalador=MinMaxScaler()
           dataNumerica=pd.DataFrame(escalador.fit_transform(dataNumerica), columns = dataNumerica.columns)
