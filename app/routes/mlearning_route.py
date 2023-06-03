@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, UploadFile
 from app.Controllers.mlearning_controller import MLearningController
 from app.Controllers.processing_controller import ProcessingController
 from app.Controllers.file_controller import FileController
+from fastapi import Body
 
 from app.models.todos_model import Todo
 from app.models.entrenamiento_model import InfoEntrenamiento
@@ -82,7 +83,14 @@ async def knn():
 async def regresion_logistica():
     return mlearning_controller.reg_logistica()
 
-@todo_api_router.post("/entrenamiento")
-async def entrenamiento_algoritmo(entrenamiento: InfoEntrenamiento):
+@todo_api_router.post("/entrenamiento", description="Entrenamiento de algoritmo \n  nombre_algoritmo: nombre del algoritmo a utilizar, columnas_x: variables a usar para x, objetivo_y: columna objetivo, tecnica: hold-out o cross-validation, cantidad: % partición dataset o número de folds para cv, normalizacion: min-max o standarscaler")
+async def entrenamiento_algoritmo(entrenamiento: InfoEntrenamiento= Body(..., example={
+    "nombre_algoritmo": "knn",
+    "columnas_x": ["año", "valor"],
+    "objetivo_y": "objetivo",
+    "tecnica": "hold-out",
+    "cantidad": 0.8,
+    "normalizacion": "min-max"
+})):
    print(entrenamiento)
-   return mlearning_controller.knn(entrenamiento)
+   return mlearning_controller.algoritmos(entrenamiento)
