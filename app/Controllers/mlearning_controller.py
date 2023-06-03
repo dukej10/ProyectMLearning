@@ -17,8 +17,8 @@ class MLearningController:
         elif entrenamiento.nombre_algoritmo.upper() == "SVM":
             pass
         elif entrenamiento.nombre_algoritmo.upper() == "ARBOL DE DECISION":
-            pass
-        elif entrenamiento.nombre_algoritmo.upper() == "REGRESION LOGISTICA":
-            pass
+            return self.mlearning_service.arbol_decision(entrenamiento)
+        elif entrenamiento.nombre_algoritmo.upper() == "REGRESION LINEAL":
+            return self.mlearning_service.regresion_lineal(entrenamiento)
         else:
             return "Algoritmo no encontrado"
