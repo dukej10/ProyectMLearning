@@ -4,6 +4,7 @@ from app.Controllers.processing_controller import ProcessingController
 from app.Controllers.file_controller import FileController
 
 from app.models.todos_model import Todo
+from app.models.entrenamiento_model import InfoEntrenamiento
 from bson import ObjectId
 from fastapi.responses import JSONResponse
 from fastapi.responses import FileResponse
@@ -75,8 +76,13 @@ async def delete_todo(id: str):
 
 @todo_api_router.get("/knn")
 async def knn():
-    return mlearning_controller.knn()
+    pass
 
 @todo_api_router.get("/regresion-logistica")
 async def regresion_logistica():
     return mlearning_controller.reg_logistica()
+
+@todo_api_router.post("/entrenamiento")
+async def entrenamiento_algoritmo(entrenamiento: InfoEntrenamiento):
+   print(entrenamiento)
+   return mlearning_controller.knn(entrenamiento)
