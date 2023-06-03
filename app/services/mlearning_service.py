@@ -87,7 +87,7 @@ class MLearningService:
                         # print("entro a hold out")
                         self.particion_dataset(dataframe, entrenamiento.cantidad)
                         self.modeloKNN = KNeighborsClassifier(n_neighbors=self.mejor_k())
-                        print(self.XTrainKNN)
+                        #print(self.XTrainKNN)
                         self.modeloKNN.fit(self.XTrainKNN,self.yTrainKNN)
                         self.yPredictKNN = self.modeloKNN.predict(self.XTestKNN)
                         #self.identificar_overffing_underffing(self.modeloKNN)
@@ -97,7 +97,7 @@ class MLearningService:
                         self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
                         return "ok"
                     elif entrenamiento.tecnica == "cross-validation":
-                        print("cantidad", entrenamiento.cantidad)
+                        #print("cantidad", entrenamiento.cantidad)
                         self.modeloKNN = KNeighborsClassifier()
                         metricas = self.validacion_cruzada(self.modeloKNN, entrenamiento.cantidad, 'knn')
                         self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
@@ -156,7 +156,7 @@ class MLearningService:
                 valores_seleccionados = []
                 for elemento in valores:
                     valores_seleccionados.append({c: elemento[c] for c in union if c in elemento})
-                print("TITULOS SELECCIONADOS ", titulos_seleccionados)
+                #print("TITULOS SELECCIONADOS ", titulos_seleccionados)
                 #print("VALORES SELECCIONADOS ", valores_seleccionados)
                 df = pd.DataFrame(valores_seleccionados, columns=list(titulos_seleccionados))
                 #print(df)
@@ -188,7 +188,9 @@ class MLearningService:
         print("ID ", id)
 
     def distribucion_normal(self, dataframe):
+        #print(dataframe.info())
         numerico = dataframe.select_dtypes(np.number)
+        #print("Numerico ", numerico)
         normal=[]
         noNormal=[]
         for i in numerico:
@@ -208,7 +210,6 @@ class MLearningService:
         self.XTrainKNN,self.XTestKNN,self.yTrainKNN,self.yTestKNN=train_test_split(self.x,self.y,test_size=porcentaje, random_state=2)
 
     def determinar_x_y(self, dataframe, columnas, objetivo):
-        print("DATAFRAME ", dataframe)
         if not isinstance(dataframe, pd.DataFrame):
              raise TypeError("El parámetro 'dataframe' debe ser un DataFrame de pandas.")
         else: 
