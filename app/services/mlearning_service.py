@@ -17,6 +17,11 @@ import seaborn as sb
 # PARA REVISAR DISTRIBUCIÓN DE LA NORMALIDAD
 from scipy.stats import normaltest
 
+#Arboles
+from sklearn.tree import DecisionTreeClassifier
+
+#Regresion Lineal
+from sklearn.linear_model import LinearRegression
 
 #Normalizar datos
 from sklearn.preprocessing import MinMaxScaler
