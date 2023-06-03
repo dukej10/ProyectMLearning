@@ -7,7 +7,7 @@ class MLearningController:
     def __init__(self):
         self.mlearning_service = MLearningService()
 
-    def knn(self, entrenamiento: InfoEntrenamiento):
+    def algoritmos(self, entrenamiento: InfoEntrenamiento):
         if entrenamiento.nombre_algoritmo.upper() == "KNN":
             return self.mlearning_service.knn(entrenamiento)
         elif entrenamiento.nombre_algoritmo.upper() == "NAIVE BAYES":
@@ -22,8 +22,3 @@ class MLearningController:
             pass
         else:
             return "Algoritmo no encontrado"
-
-    
-    def reg_logistica(self):
-        #return self.mlearning_service.regresion_logistica()
-        return "ok"
