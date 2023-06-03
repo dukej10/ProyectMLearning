@@ -22,7 +22,7 @@ class MongoDBService:
         try:
             self.collection = self.db[coleccion]
             result = self.collection.find_one(sort=[('_id', -1)])
-            # print(f'JSON obtenido en MongoDB\n : {str(result)}')
+            #print(f'JSON obtenido en MongoDB\n : {str(result)}')
             # print(type(result))
             return result
         except Exception as e:
