@@ -106,29 +106,38 @@ class MLearningService:
             else:
                 return validaciones
         
-    def regresion_logistica(self):
-        dataframe = self.preparacion_dataframe()
-        self.particion_dataset(dataframe)
-        mejores_parametros = self.mejores_parametros_regresion_log()
-        self.modeloRegLog = LogisticRegression(**mejores_parametros)
-        self.modeloRegLog.fit(self.XTrain, self.yTrain)
-        self.yPredict = self.modeloRegLog.predict(self.XTest)
-        self.identificar_overffing_underffing(self.modeloRegLog)
-        if self.obtener_matriz_confusion('reg-log') is None:
-            return "error"
+    def regresion_logistica(self, entrenamiento: InfoEntrenamiento):
+        validaciones = self.validaciones(entrenamiento)
+        if validaciones is True:
+            dataframe = self.preparacion_dataframe(entrenamiento)
+            if dataframe is not None:
+                self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
+                if entrenamiento.tecnica == "hold-out":
+                    self.particion_dataset(dataframe, entrenamiento.cantidad)
+                    #mejores_parametros = self.mejores_parametros_regresion_log()
+                    self.modeloRegLog = LogisticRegression(solver='newton-cg')
+                    self.modeloRegLog.fit(self.XTrain, self.yTrain)
+                    print("Entreno")
+                    self.yPredict = self.modeloRegLog.predict(self.XTest)
+                    self.identificar_overffing_underffing(self.modeloRegLog)
+                    if self.obtener_matriz_confusion('reglog') is None:
+                        return "error"
+                    metricas =self.metricas_hold_out()
+                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    return "ok"
         return "ok"
     
     def mejores_parametros_regresion_log(self):
+        print("entro a mejores parametros")
         parameters = {
             'penalty': ['l1', 'l2'],
-            'C': [0.01, 0.1, 1.0, 10.0, 100.0],
-            'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
+            'C': [0.01, 0.1, 1.0, 10.0],
             }   
         # Crea el modelo de regresión logística
-        model = LogisticRegression()
+        model = LogisticRegression(solver='newton-cg', max_iter=1000)
 
         # Utiliza GridSearchCV para buscar los mejores parámetros
-        grid_search = GridSearchCV(model, parameters, cv=5)
+        grid_search = GridSearchCV(model, parameters, cv=10)
         grid_search.fit(self.XTrain, self.yTrain)
 
         # Imprime los mejores parámetros encontrados
@@ -138,6 +147,7 @@ class MLearningService:
         best_model = grid_search.best_estimator_
         accuracy = best_model.score(self.XTest, self.yTest)
         print("Exactitud en el conjunto de prueba:", accuracy)
+        print("-------------------------------------------")
         return  grid_search.best_params_
          
     def preparacion_dataframe(self, entrenamiento: InfoEntrenamiento):
