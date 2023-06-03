@@ -85,7 +85,7 @@ class MLearningService:
                     if entrenamiento.tecnica == "hold-out":
                         # print("entro a hold out")
                         self.particion_dataset(dataframe, entrenamiento.cantidad)
-                        self.modeloKNN = KNeighborsClassifier(n_neighbors=5)
+                        self.modeloKNN = KNeighborsClassifier(n_neighbors=self.mejor_k())
                         print(self.XTrainKNN)
                         self.modeloKNN.fit(self.XTrainKNN,self.yTrainKNN)
                         self.yPredictKNN = self.modeloKNN.predict(self.XTestKNN)
@@ -147,27 +147,31 @@ class MLearningService:
                 #print("TITULOS ", union)
                 #print("VALORES ", valores)
                 # Filtrar los títulos y valores según las columnas especificadas
-                titulos_seleccionados = {c: titulos[union.index(c)] for c in union if c in titulos}
+                titulos_seleccionados = {c  for c in union if c in titulos}
                 valores_seleccionados = []
                 for elemento in valores:
                     valores_seleccionados.append({c: elemento[c] for c in union if c in elemento})
-                #print("TITULOS SELECCIONADOS ", titulos_seleccionados)
+                print("TITULOS SELECCIONADOS ", titulos_seleccionados)
                 #print("VALORES SELECCIONADOS ", valores_seleccionados)
-                df = pd.DataFrame(valores_seleccionados, columns=titulos_seleccionados)
+                df = pd.DataFrame(valores_seleccionados, columns=list(titulos_seleccionados))
+                #print(df)
                 print("DISTRIBUCION NORMAL")
                 self.distribucion_normal(df)
                 #print(df)
                 print("-------------------------------------------")
-                #print("CONCATENAR")
+                #print("CODIFICAR")
                 df = self.dataframe_service.codificar_valores_cat(df)
                 print("NORMALIZAR")
-                dataNumerica = self.dataframe_service.normalizar_informacion(df, entrenamiento.normalizacion)
+                dataNumerica = self.dataframe_service.normalizar_informacion(dataframe=df, tipo=entrenamiento.normalizacion, objetivo_y= entrenamiento.objetivo_y)
+                #print(df)
                 print("REDONDEAR")
                 dataNumerica = self.dataframe_service.redondear_datos(dataNumerica)
+                #print(df)
                 print("CONCATENAR")
-                df = self.dataframe_service.concatenar_datos(dataNumerica, df)
-                print("AQUI ESTA EL DATAFRAME")
+                #df = self.dataframe_service.concatenar_datos(dataNumerica, df, entrenamiento.objetivo_y)
                 print(df)
+                print("AQUI ESTA EL DATAFRAME")
+                #print(df)
                 return df
         except Exception as e:
             print("Error en la preparación del dataframe: ", e)
