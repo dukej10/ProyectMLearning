@@ -2,6 +2,7 @@ import os
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.calibration import cross_val_predict
 from sklearn.linear_model import LogisticRegression
 from app.services.mongodb_service import MongoDBService
 from app.services.processing_service import ProcessingService
@@ -89,14 +90,18 @@ class MLearningService:
                         print(self.XTrainKNN)
                         self.modeloKNN.fit(self.XTrainKNN,self.yTrainKNN)
                         self.yPredictKNN = self.modeloKNN.predict(self.XTestKNN)
-                        self.identificar_overffing_underffing(self.modeloKNN)
+                        #self.identificar_overffing_underffing(self.modeloKNN)
                         if self.obtener_matriz_confusion('knn') is None:
                             return "error"
                         metricas =self.metricas_hold_out()
                         self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
                         return "ok"
                     elif entrenamiento.tecnica == "cross-validation":
-                        self.validacion_cruzada(self.modeloKNN, self.infoEntrenamiento.cantidad)
+                        print("cantidad", entrenamiento.cantidad)
+                        self.modeloKNN = KNeighborsClassifier()
+                        metricas = self.validacion_cruzada(self.modeloKNN, entrenamiento.cantidad, 'knn')
+                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                        return "ok"
                 else:
                     return "error"
             else:
@@ -208,7 +213,6 @@ class MLearningService:
              raise TypeError("El parámetro 'dataframe' debe ser un DataFrame de pandas.")
         else: 
             self.x=dataframe.loc[:,columnas] # obtener valores de x
-            print("xxxxxxxxxxx")
             print("X ", self.x)
             self.y=dataframe[objetivo]
             print("Y ", self.y)
@@ -241,9 +245,10 @@ class MLearningService:
             matrizKNN = confusion_matrix(y_test, y_pred)
             print(matrizKNN)
             sb.heatmap(matrizKNN, annot=True, cmap="Blues")
+            plt.title(f"Matriz de Confusión {nombre_modelo} - Hold-Out")
             ruta_guardado = "app/files/imgs/modelos/matrices_correlacion/"
             os.makedirs(ruta_guardado, exist_ok=True)
-            plt.savefig(os.path.join(ruta_guardado, f"{nombre_modelo}-matriz_confusion.png"))
+            plt.savefig(os.path.join(ruta_guardado, f"{nombre_modelo}-ho-matriz_confusion.png"))
             plt.close()
             return True
         except Exception as e:
@@ -296,14 +301,8 @@ class MLearningService:
         else:
             return None
 
-    def validacion_cruzada(self, modelo, cv):
+    def validacion_cruzada(self, modelo, cv, nombre_modelo):
 
-        # Realizar validación cruzada con 5 pliegues
-        scores = cross_val_score(modelo, self.x, self.y, cv=cv, scoring='accuracy')
-
-        # Calcular la precisión media
-        precision_media = scores.mean()
-        print("Precisión media:", precision_media)
 
         scoring = {
             'accuracy': 'accuracy',
@@ -326,6 +325,23 @@ class MLearningService:
         print("Exhaustividad media:", recall_media)
         print("Puntuación F1 media:", f1_media)
 
+        # Obtener la matriz de confusión promedio
+        y_pred = cross_val_predict(modelo, self.x, self.y, cv=cv)
+        matriz_confusion = confusion_matrix(self.y, y_pred)
+
+        # Visualizar la matriz de confusión
+        #plt.figure(figsize=(8, 6))
+        sb.heatmap(matriz_confusion, annot=True, fmt='d', cmap='Blues')
+        plt.title(f"Matriz de Confusión {nombre_modelo} - Validación Cruzada")
+        ruta_guardado = "app/files/imgs/modelos/matrices_correlacion/"
+        os.makedirs(ruta_guardado, exist_ok=True)
+        plt.savefig(os.path.join(ruta_guardado, f"{nombre_modelo}-cv-matriz_confusion.png"))
+        plt.close()
+        # plt.xlabel("Predicciones")
+        # plt.ylabel("Etiquetas Verdaderas")
+
+
+        return {'accuracy': accuracy_media, 'precision': precision_media, 'recall': recall_media, 'f1': f1_media}
     
         
     
