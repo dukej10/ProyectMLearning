@@ -127,6 +127,56 @@ class MLearningService:
                     return "ok"
         return "ok"
     
+    def arbol_decision(self, entrenamiento: InfoEntrenamiento):
+        validaciones = self.validaciones(entrenamiento)
+        if validaciones is True:
+            dataframe = self.preparacion_dataframe(entrenamiento)
+            if dataframe is not None:
+                self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
+                modelo = DecisionTreeClassifier()
+                if entrenamiento.tecnica == "hold-out":
+                    self.particion_dataset(dataframe, entrenamiento.cantidad)
+                    modelo.fit(self.XTrain, self.yTrain)
+                    self.yPredict = modelo.predict(self.XTest)
+                    if self.obtener_matriz_confusion('arbol_decision') is None:
+                        return "error"
+                    metricas = self.metricas_hold_out()
+                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    return "ok"
+                elif entrenamiento.tecnica == "cross-validation":
+                    metricas = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'arbol_decision')
+                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    return "ok"
+            else:
+                return "error"
+        else:
+            return validaciones
+    
+    def regresion_lineal(self, entrenamiento: InfoEntrenamiento):
+        validaciones = self.validaciones(entrenamiento)
+        if validaciones is True:
+            dataframe = self.preparacion_dataframe(entrenamiento)
+            if dataframe is not None:
+                self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
+                modelo = LinearRegression()
+                if entrenamiento.tecnica == "hold-out":
+                    self.particion_dataset(dataframe, entrenamiento.cantidad)
+                    modelo.fit(self.XTrain, self.yTrain)
+                    self.yPredict = modelo.predict(self.XTest)
+                    if self.obtener_matriz_confusion('regresion_lineal') is None:
+                        return "error"
+                    metricas = self.metricas_hold_out()
+                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    return "ok"
+                elif entrenamiento.tecnica == "cross-validation":
+                    metricas = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'regresion_lineal')
+                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    return "ok"
+            else:
+                return "error"
+        else:
+            return validaciones
+        
     def mejores_parametros_regresion_log(self):
         print("entro a mejores parametros")
         parameters = {
