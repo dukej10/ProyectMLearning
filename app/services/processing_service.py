@@ -92,10 +92,21 @@ class ProcessingService:
             print(f'Error al tratar los datos: {str(e)}')
             return None
         
+    def columnas_disponibles_dataset(self):
+        try:
+            datos = self.mongo_service.obtener_ultimo_registro("Dataset")
+            if datos:
+                print(datos["titulos"])
+                titulos = datos["titulos"]
+                return titulos
+        except Exception as e:
+            print(f'Error al obtener los datos: {str(e)}')
+            return None
+
     def obtener_tipo_datos(self):
         
         try:
-            datos = self.mongo_service.obtener_ultimo_registro()    
+            datos = self.mongo_service.obtener_ultimo_registro('Dataset')    
             if datos:
                 titulos = datos["titulos"]
                 valores = datos['valores']
@@ -125,7 +136,7 @@ class ProcessingService:
     def generar_img_analisis(self):
         try:
             # Lee el archivo Excel o utiliza tu DataFrame existente
-            datos = self.mongo_service.obtener_ultimo_registro()    
+            datos = self.mongo_service.obtener_ultimo_registro('Dataset')    
             # print(dataframe)
             if datos:
                 titulos = datos["titulos"]
