@@ -92,8 +92,6 @@ class MLearningService:
                         self.guardar_modelo(self.modeloKNN, 'knn')
                         self.yPredict = self.modeloKNN.predict(self.XTest)
                         print("-----------------yPredict-------------------")
-
-                        self.prediccion()
                         #self.identificar_overffing_underffing(self.modeloKNN)
                         if self.obtener_matriz_confusion('knn') is None:
                             return "error"
@@ -381,23 +379,21 @@ class MLearningService:
         if datos:
             for data in datos["datosX"]:
                 # print(data['mes'])
-                print(".-........")
                 for info in data:
                     for i in range(0, len(data[info])):
-                        if data[info][i]["valor_original"] == prediccion.Area:
-                            prediccion.Area = data[info][i]["valor_codificado"]
-                        elif data[info][i]["valor_original"] == prediccion.Categoria:
-                            prediccion.Categoria = data[info][i]["valor_codificado"]
+                        if data[info][i]["valor_original"] == prediccion.area:
+                            prediccion.area = data[info][i]["valor_codificado"]
+                        elif data[info][i]["valor_original"] == prediccion.categoria:
+                            prediccion.categoria = data[info][i]["valor_codificado"]
                         elif data[info][i]["valor_original"] == prediccion.agrupa:
                             prediccion.agrupa = data[info][i]["valor_codificado"]
                         elif data[info][i]["valor_original"] == prediccion.genero:
                             prediccion.genero = data[info][i]["valor_codificado"]
                         elif data[info][i]["valor_original"] == prediccion.mes:
                             prediccion.mes = data[info][i]["valor_codificado"]
-            print(prediccion)
             ejemplo_prueba = pd.DataFrame({
-                    'Area': [prediccion.Area],
-                    'Categoria': [prediccion.Categoria],
+                    'area': [prediccion.area],
+                    'categoria': [prediccion.categoria],
                     'genero': [prediccion.genero],
                     'agrupa': [prediccion.agrupa],
                     'valor': [prediccion.valor],
@@ -405,7 +401,20 @@ class MLearningService:
                     'mes': [prediccion.mes]
                 })
             # Cargar el modelo desde el archivo
-            ruta_modelo = 'app/files/modelos/knn.pkl'
+            ruta_modelo = 'app/files/modelos/'
+            if prediccion.algoritmo.upper().replace(" ", "") == 'KNN':
+                ruta_modelo += 'knn.pkl'
+            elif prediccion.algoritmo.upper().replace(" ", "") == 'SVM':
+                ruta_modelo += 'svm.pkl'
+            elif prediccion.algoritmo.upper().replace(" ", "") == 'NAIVEBAYES':
+                ruta_modelo += 'naivebayes.pkl'
+            elif prediccion.algoritmo.upper().replace(" ", "") == 'REGRESIONLOGISTICA':
+                ruta_modelo += 'reglog.pkl'
+            elif prediccion.algoritmo.upper().replace(" ", "") == 'ARBOLDEDECISION':
+                ruta_modelo += 'arboldedicion.pkl'
+            elif prediccion.algoritmo.upper().replace(" ", "") == 'REGRESIONLINEAL':
+                ruta_modelo += 'regresionlineal.pkl'
+
             with open(ruta_modelo, 'rb') as archivo:
                 modelo_cargado = pickle.load(archivo)
             
@@ -415,10 +424,7 @@ class MLearningService:
                 print(data)
                 if data["valor_codificado"] == prediccion[0]:
                         prediccion = data["valor_original"]
-                        break
-            print("PREDICCION")
-            print(prediccion)
-            
+                        break            
             return f"La predicción es: {prediccion}"
         else:
-            return "No hay datos"
+            return "No hay datos para hacer la prediccion"

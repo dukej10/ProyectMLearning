@@ -3,6 +3,7 @@ from app.Controllers.mlearning_controller import MLearningController
 from app.Controllers.processing_controller import ProcessingController
 from app.Controllers.file_controller import FileController
 from fastapi import Body
+from app.models.prediccion_model import PrediccionModel
 
 from app.models.todos_model import Todo
 from app.models.entrenamiento_model import InfoEntrenamiento
@@ -96,3 +97,16 @@ async def entrenamiento_algoritmo(entrenamiento: InfoEntrenamiento= Body(..., ex
 })):
    print(entrenamiento)
    return mlearning_controller.algoritmos(entrenamiento)
+
+@todo_api_router.post("/prediccion", description="Predicción de algoritmo \n  nombre_algoritmo: nombre del algoritmo a utilizar, columnas_x: variables a usar para x, objetivo_y: columna objetivo, tecnica: hold-out o cross-validation, cantidad: % partición dataset o número de folds para cv, normalizacion: min-max o standarscaler")
+async def prediccion_algoritmo(prediccion: PrediccionModel= Body(..., example={
+            'algoritmo': 'knn',
+            'area': 'Manizales',
+            'categoria': 'arma blanca / cortopunzante',
+            'genero': 1,
+            'agrupa': 'adultos',
+            'valor': 20000,
+            'año': 2015,
+            'mes': 'Enero'
+        })):
+    return mlearning_controller.prediccion(prediccion)
