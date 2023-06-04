@@ -27,20 +27,20 @@ class DataframeService:
         auxX2 = []
         valores_originales = dataframe[colsAll].copy()
         print("COLUMNAS ", cat_colsAll)
-        for col in colsAll:
+        for col in cat_colsAll:
                 print("COL ", col)
-                if col in cat_colsAll:
-                    dataframe[col] = encoder.fit_transform(dataframe[col])
-                    print("CODIFICADO ", col)
-                    # Obtener los valores originales correspondientes a cada valor codificado
-                    valores_originales[col] = encoder.inverse_transform(dataframe[col])
-                else:
-                    valores_originales[col] = dataframe[col]
+                # if col in cat_colsAll:
+                dataframe[col] = encoder.fit_transform(dataframe[col])
+                print("CODIFICADO ", col)
+                # Obtener los valores originales correspondientes a cada valor codificado
+                valores_originales[col] = encoder.inverse_transform(dataframe[col])
+                # else:
+                #     valores_originales[col] = dataframe[col]
                 
                 
         print("COLUMNAS ", cat_colsAll)
 # # Obtener los valor originales y codificado de cada columna elemento de las columnas
-        for col in colsAll:
+        for col in cat_colsAll:
                 for valor_codificado, valor_original in zip(dataframe[col], valores_originales[col]):
                     if col == objetivo_y:
                         if valor_codificado not in aux:
