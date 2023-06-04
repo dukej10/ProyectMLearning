@@ -421,7 +421,6 @@ class MLearningService:
             #Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
             prediccion = modelo_cargado.predict(ejemplo_prueba)
             for data in datos["datosY"]:
-                print(data)
                 if data["valor_codificado"] == prediccion[0]:
                         prediccion = data["valor_original"]
                         break            
