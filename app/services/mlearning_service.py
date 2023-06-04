@@ -1,4 +1,5 @@
 import os
+import pickle
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,7 +13,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, cross_validate
 #Importación knn
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score, classification_report, confusion_matrix,precision_score, recall_score, f1_score
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report, confusion_matrix,precision_score, recall_score, f1_score, make_scorer
 import seaborn as sb
 # PARA REVISAR DISTRIBUCIÓN DE LA NORMALIDAD
 from scipy.stats import normaltest
@@ -86,9 +87,12 @@ class MLearningService:
                         # print("entro a hold out")
                         self.particion_dataset(dataframe, entrenamiento.cantidad)
                         self.modeloKNN = KNeighborsClassifier(n_neighbors=self.mejor_k())
-                        #print(self.XTrainKNN)
                         self.modeloKNN.fit(self.XTrain,self.yTrain)
+                        self.guardar_modelo(self.modeloKNN, 'knn')
                         self.yPredict = self.modeloKNN.predict(self.XTest)
+                        print("-----------------yPredict-------------------")
+
+                        self.probar()
                         #self.identificar_overffing_underffing(self.modeloKNN)
                         if self.obtener_matriz_confusion('knn') is None:
                             return "error"
@@ -117,6 +121,7 @@ class MLearningService:
                     #mejores_parametros = self.mejores_parametros_regresion_log()
                     self.modeloRegLog = LogisticRegression(solver='newton-cg')
                     self.modeloRegLog.fit(self.XTrain, self.yTrain)
+                    self.guardar_modelo(self.modeloRegLog, 'reglog')
                     print("Entreno")
                     self.yPredict = self.modeloRegLog.predict(self.XTest)
                     self.identificar_overffing_underffing(self.modeloRegLog)
@@ -125,30 +130,35 @@ class MLearningService:
                     metricas =self.metricas_hold_out()
                     self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
                     return "ok"
+                elif entrenamiento.tecnica == "cross-validation":
+                    self.modeloRegLog = LogisticRegression()
+                    metricas = self.validacion_cruzada(self.modeloRegLog, entrenamiento.cantidad, 'reglog')
+                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    return "ok"
         return "ok"
     
-    def mejores_parametros_regresion_log(self):
-        print("entro a mejores parametros")
-        parameters = {
-            'penalty': ['l1', 'l2'],
-            'C': [0.01, 0.1, 1.0, 10.0],
-            }   
-        # Crea el modelo de regresión logística
-        model = LogisticRegression(solver='newton-cg', max_iter=1000)
+    # def mejores_parametros_regresion_log(self):
+    #     print("entro a mejores parametros")
+    #     parameters = {
+    #         'penalty': ['l1', 'l2'],
+    #         'C': [0.01, 0.1, 1.0, 10.0],
+    #         }   
+    #     # Crea el modelo de regresión logística
+    #     model = LogisticRegression(solver='newton-cg', max_iter=1000)
 
-        # Utiliza GridSearchCV para buscar los mejores parámetros
-        grid_search = GridSearchCV(model, parameters, cv=10)
-        grid_search.fit(self.XTrain, self.yTrain)
+    #     # Utiliza GridSearchCV para buscar los mejores parámetros
+    #     grid_search = GridSearchCV(model, parameters, cv=10)
+    #     grid_search.fit(self.XTrain, self.yTrain)
 
-        # Imprime los mejores parámetros encontrados
-        print("Mejores parámetros:", grid_search.best_params_)
+    #     # Imprime los mejores parámetros encontrados
+    #     print("Mejores parámetros:", grid_search.best_params_)
 
-        # Evalúa el modelo con los mejores parámetros en el conjunto de prueba
-        best_model = grid_search.best_estimator_
-        accuracy = best_model.score(self.XTest, self.yTest)
-        print("Exactitud en el conjunto de prueba:", accuracy)
-        print("-------------------------------------------")
-        return  grid_search.best_params_
+    #     # Evalúa el modelo con los mejores parámetros en el conjunto de prueba
+    #     best_model = grid_search.best_estimator_
+    #     accuracy = best_model.score(self.XTest, self.yTest)
+    #     print("Exactitud en el conjunto de prueba:", accuracy)
+    #     print("-------------------------------------------")
+    #     return  grid_search.best_params_
          
     def preparacion_dataframe(self, entrenamiento: InfoEntrenamiento):
         try:
@@ -174,7 +184,7 @@ class MLearningService:
                 #print(df)
                 print("-------------------------------------------")
                 #print("CODIFICAR")
-                df = self.dataframe_service.codificar_valores_cat(df)
+                df = self.dataframe_service.codificar_valores_cat(df, entrenamiento.objetivo_y)
                 print("NORMALIZAR")
                 dataNumerica = self.dataframe_service.normalizar_informacion(dataframe=df, tipo=entrenamiento.normalizacion, objetivo_y= entrenamiento.objetivo_y)
                 #print(df)
@@ -223,9 +233,9 @@ class MLearningService:
              raise TypeError("El parámetro 'dataframe' debe ser un DataFrame de pandas.")
         else: 
             self.x=dataframe.loc[:,columnas] # obtener valores de x
-            print("X ", self.x)
+            #print("X ", self.x)
             self.y=dataframe[objetivo]
-            print("Y ", self.y)
+            #print("Y ", self.y)
 
     def mejor_k(self):
          # Posibles valores que puede tomar
@@ -291,7 +301,7 @@ class MLearningService:
 
     def metricas_hold_out(self):
         accuracy = accuracy_score(self.yTest,self.yPredict) # proporción de predicciones correctas del modelo
-        precision = precision_score(self.yTest,self.yPredict, average = 'weighted') # proporción de predicciones positivas que fueron correctas
+        precision = precision_score(self.yTest,self.yPredict, average = 'weighted', zero_division=1) # proporción de predicciones positivas que fueron correctas
         recall = recall_score(self.yTest, self.yPredict, average = 'weighted') # proporción de positivos reales que se identificaron correctamente
         f1 = f1_score(self.yTest, self.yPredict, average = 'weighted') # medida armónica de precision y recall
         print(f'Accuracy: {accuracy}')
@@ -316,11 +326,11 @@ class MLearningService:
 
         scoring = {
             'accuracy': 'accuracy',
-            'precision': 'precision_macro',
+            'precision': make_scorer(precision_score, zero_division=1, average='macro'),
             'recall': 'recall_macro',
             'f1': 'f1_macro'
         }
-
+    
         # Obtener las métricas para cada pliegue
         resultados = cross_validate(modelo, self.x, self.y, cv=cv, scoring=scoring)
 
@@ -353,6 +363,44 @@ class MLearningService:
 
         return {'accuracy': accuracy_media, 'precision': precision_media, 'recall': recall_media, 'f1': f1_media}
     
+    def guardar_modelo(self, modelo, nombre_modelo):
+        #print(self.XTest.columns)
+        try:
+           ruta_directorio = f'app/files/modelos'
+           if not os.path.exists(ruta_directorio):
+            os.makedirs(ruta_directorio)
+           ruta_modelo = os.path.join(ruta_directorio, f'{nombre_modelo}.pkl')
+           with open(ruta_modelo, 'wb') as archivo:
+                pickle.dump(modelo, archivo)
+        except Exception as e:
+            return None
         
-    
-                
+    def prediccion(self):
+        ejemplo_prueba = pd.DataFrame({
+            'Area': [4],
+            'Categoria': [11],
+            'genero': [1],
+            'agrupa': [1],
+            'valor': [52.255316],
+            'año': [2021],
+            'mes': [11]
+        })
+        
+
+
+        # Cargar el modelo desde el archivo
+        ruta_modelo = 'app/files/modelos/knn.pkl'
+        with open(ruta_modelo, 'rb') as archivo:
+            modelo_cargado = pickle.load(archivo)
+        datos = self.mongo_service.obtener_ultimo_registro('RepresentacionCodificacionObjY')
+        print("Datos: ", datos)
+        # Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
+        prediccion = modelo_cargado.predict(ejemplo_prueba)
+        for valores in datos["datos"]:
+            type(valores['valor_codificado'])
+            # if valores['valor_codificado'] == prediccion[0]:
+            #     prediccion = valores['valor_original']
+            #     break
+        # Imprimir la predicción
+        print("PREDICCION")
+        print(prediccion)
