@@ -1,4 +1,5 @@
 from app.models.entrenamiento_model import InfoEntrenamiento
+from app.models.prediccion_model import PrediccionModel
 from app.services.mlearning_service import MLearningService
 
 
@@ -13,12 +14,15 @@ class MLearningController:
         elif entrenamiento.nombre_algoritmo.upper() == "NAIVE BAYES":
             pass
         elif entrenamiento.nombre_algoritmo.upper() == "REGRESION LOGISTICA":
-            pass
+            return self.mlearning_service.regresion_logistica(entrenamiento)
         elif entrenamiento.nombre_algoritmo.upper() == "SVM":
             pass
         elif entrenamiento.nombre_algoritmo.upper() == "ARBOL DE DECISION":
             pass
-        elif entrenamiento.nombre_algoritmo.upper() == "REGRESION LOGISTICA":
+        elif entrenamiento.nombre_algoritmo.upper() == "REGRESION LINEAL":
             pass
         else:
             return "Algoritmo no encontrado"
+        
+    def prediccion(self, prediccion: PrediccionModel):
+        return self.mlearning_service.prediccion(prediccion)
