@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.calibration import cross_val_predict
 from sklearn.linear_model import LogisticRegression
+from app.models.prediccion_model import PrediccionModel
 from app.services.mongodb_service import MongoDBService
 from app.services.processing_service import ProcessingService
 from app.utils.utils import Utils
@@ -92,7 +93,7 @@ class MLearningService:
                         self.yPredict = self.modeloKNN.predict(self.XTest)
                         print("-----------------yPredict-------------------")
 
-                        self.probar()
+                        self.prediccion()
                         #self.identificar_overffing_underffing(self.modeloKNN)
                         if self.obtener_matriz_confusion('knn') is None:
                             return "error"
@@ -122,7 +123,7 @@ class MLearningService:
                     self.modeloRegLog = LogisticRegression(solver='newton-cg')
                     self.modeloRegLog.fit(self.XTrain, self.yTrain)
                     self.guardar_modelo(self.modeloRegLog, 'reglog')
-                    print("Entreno")
+                    #print("Entreno")
                     self.yPredict = self.modeloRegLog.predict(self.XTest)
                     self.identificar_overffing_underffing(self.modeloRegLog)
                     if self.obtener_matriz_confusion('reglog') is None:
@@ -195,7 +196,7 @@ class MLearningService:
                 # #df = self.dataframe_service.concatenar_datos(dataNumerica, df, entrenamiento.objetivo_y)
                 # print(df)
                 print("AQUI ESTA EL DATAFRAME")
-                print(df)
+                #print(df)
                 return df
         except Exception as e:
             print("Error en la preparación del dataframe: ", e)
@@ -253,10 +254,10 @@ class MLearningService:
     
     def obtener_matriz_confusion(self, nombre_modelo):
         try:
-            print("Matriz de confusion")
-            print(self.yTest)
-            print("/////////////")
-            print(self.yPredict)
+            # print("Matriz de confusion")
+            # print(self.yTest)
+            # print("/////////////")
+            # print(self.yPredict)
             # Convertir self.yTestKNN a una matriz numpy
             y_test = np.array(self.yTest.values)
 
@@ -375,32 +376,49 @@ class MLearningService:
         except Exception as e:
             return None
         
-    def prediccion(self):
-        ejemplo_prueba = pd.DataFrame({
-            'Area': [4],
-            'Categoria': [11],
-            'genero': [1],
-            'agrupa': [1],
-            'valor': [52.255316],
-            'año': [2021],
-            'mes': [11]
-        })
-        
-
-
-        # Cargar el modelo desde el archivo
-        ruta_modelo = 'app/files/modelos/knn.pkl'
-        with open(ruta_modelo, 'rb') as archivo:
-            modelo_cargado = pickle.load(archivo)
-        datos = self.mongo_service.obtener_ultimo_registro('RepresentacionCodificacionObjY')
-        print("Datos: ", datos)
-        # Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
-        prediccion = modelo_cargado.predict(ejemplo_prueba)
-        for valores in datos["datos"]:
-            type(valores['valor_codificado'])
-            # if valores['valor_codificado'] == prediccion[0]:
-            #     prediccion = valores['valor_original']
-            #     break
-        # Imprimir la predicción
-        print("PREDICCION")
-        print(prediccion)
+    def prediccion(self, prediccion: PrediccionModel):
+        datos = self.mongo_service.obtener_ultimo_registro('RepresentacionCodificacion')
+        if datos:
+            for data in datos["datosX"]:
+                # print(data['mes'])
+                print(".-........")
+                for info in data:
+                    for i in range(0, len(data[info])):
+                        if data[info][i]["valor_original"] == prediccion.Area:
+                            prediccion.Area = data[info][i]["valor_codificado"]
+                        elif data[info][i]["valor_original"] == prediccion.Categoria:
+                            prediccion.Categoria = data[info][i]["valor_codificado"]
+                        elif data[info][i]["valor_original"] == prediccion.agrupa:
+                            prediccion.agrupa = data[info][i]["valor_codificado"]
+                        elif data[info][i]["valor_original"] == prediccion.genero:
+                            prediccion.genero = data[info][i]["valor_codificado"]
+                        elif data[info][i]["valor_original"] == prediccion.mes:
+                            prediccion.mes = data[info][i]["valor_codificado"]
+            print(prediccion)
+            ejemplo_prueba = pd.DataFrame({
+                    'Area': [prediccion.Area],
+                    'Categoria': [prediccion.Categoria],
+                    'genero': [prediccion.genero],
+                    'agrupa': [prediccion.agrupa],
+                    'valor': [prediccion.valor],
+                    'año': [prediccion.año],
+                    'mes': [prediccion.mes]
+                })
+            # Cargar el modelo desde el archivo
+            ruta_modelo = 'app/files/modelos/knn.pkl'
+            with open(ruta_modelo, 'rb') as archivo:
+                modelo_cargado = pickle.load(archivo)
+            
+            #Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
+            prediccion = modelo_cargado.predict(ejemplo_prueba)
+            for data in datos["datosY"]:
+                print(data)
+                if data["valor_codificado"] == prediccion[0]:
+                        prediccion = data["valor_original"]
+                        break
+            print("PREDICCION")
+            print(prediccion)
+            
+            return f"La predicción es: {prediccion}"
+        else:
+            return "No hay datos"
