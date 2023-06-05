@@ -24,6 +24,10 @@ from sklearn.tree import DecisionTreeClassifier
 
 #Regresion Lineal
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import cross_val_score
 
 #Normalizar datos
 from sklearn.preprocessing import MinMaxScaler
@@ -172,33 +176,61 @@ class MLearningService:
             dataframe = self.preparacion_dataframe(entrenamiento)
             if dataframe is not None:
                 self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
-                modelo = LinearRegression()
                 if entrenamiento.tecnica == "hold-out":
+                    modelo = LinearRegression()
                     self.particion_dataset(dataframe, entrenamiento.cantidad)
                     modelo.fit(self.XTrain, self.yTrain)
                     self.yPredict = modelo.predict(self.XTest)
-                    if self.obtener_matriz_confusion('regresion_lineal') is None:
-                        return "error"
-                    metricas = self.metricas_hold_out()
+                    #if self.obtener_matriz_confusion('regresion_lineal') is None:
+                        #return "error"
+                    metricas = self.metricas_hold_out_regresionLineal()
                     self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
                     return "ok"
                 elif entrenamiento.tecnica == "cross-validation":
-                    metricas = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'regresion_lineal')
+                    modelo = LinearRegression()
+                    metricas = self.validacion_cruzada_regresionLineal(modelo, entrenamiento.cantidad)
                     self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
                     return "ok"
-            else:
-                return "error"
-        else:
-            return validaciones
+            #else:
+                #return "error"
+        #else:
+            #return validaciones
+
+    def metricas_hold_out_regresionLineal(self):
+        mae = mean_absolute_error(self.yTest,self.yPredict)
+        mse = mean_squared_error(self.yTest,self.yPredict)
+        r2 = r2_score(self.yTest,self.yPredict)
+
+        print(f"Mean Absolute Error (MAE): {mae}")
+        print(f"Mean Squared Error (MSE): {mse}")
+        print(f"R-squared (R2): {r2}")
+
+        return {'Mean Absolute Error (MAE)': mae, 'Mean Squared Error (MSE)': mse, 'R-squared (R2)': r2}
+    
+
+    def validacion_cruzada_regresionLineal(self, modelo, cv):
+        scores = cross_val_score(modelo, self.x, self.y, cv=cv, scoring='neg_mean_squared_error')
+        mse_scores = -scores  # convertir a positivo
+        rmse_scores = np.sqrt(mse_scores)
+        r2_scores = cross_val_score(modelo, self.x, self.y, cv=cv, scoring='r2')
+
+        print(f"Mean Squared Error (MSE): {mse_scores}")
+        print(f"Root Mean Squared Error (RMSE): {rmse_scores}")
+        print(f"R-squared (R2): {r2_scores}")
+
+        return {'Mean Squared Error (MSE)': list(mse_scores), 
+                'Root Mean Squared Error (RMSE)': list(rmse_scores), 
+                'R-squared (R2)': list(r2_scores)}
+
         
-    def mejores_parametros_regresion_log(self):
-        print("entro a mejores parametros")
-        parameters = {
-            'penalty': ['l1', 'l2'],
-            'C': [0.01, 0.1, 1.0, 10.0],
-            }   
-        # Crea el modelo de regresión logística
-        model = LogisticRegression(solver='newton-cg', max_iter=1000)
+    #def mejores_parametros_regresion_log(self):
+    #    print("entro a mejores parametros")
+    #     parameters = {
+    #         'penalty': ['l1', 'l2'],
+    #         'C': [0.01, 0.1, 1.0, 10.0],
+    #         }   
+    #     # Crea el modelo de regresión logística
+    #     model = LogisticRegression(solver='newton-cg', max_iter=1000)
 
     #     # Utiliza GridSearchCV para buscar los mejores parámetros
     #     grid_search = GridSearchCV(model, parameters, cv=10)
@@ -364,6 +396,7 @@ class MLearningService:
         print(f'F1 Score: {f1}')
         return {'accuracy': accuracy, 'precision': precision, 'recall': recall, 'f1': f1}
     
+    
     def validar_columnas(self, columnas):
         self.disponibles= self.processing_service.columnas_disponibles_dataset()
         print("Columnas disponibles: ", self.disponibles)
@@ -376,8 +409,6 @@ class MLearningService:
             return None
 
     def validacion_cruzada(self, modelo, cv, nombre_modelo):
-
-
         scoring = {
             'accuracy': 'accuracy',
             'precision': make_scorer(precision_score, zero_division=1, average='macro'),
@@ -413,7 +444,6 @@ class MLearningService:
         plt.close()
         # plt.xlabel("Predicciones")
         # plt.ylabel("Etiquetas Verdaderas")
-
 
         return {'accuracy': accuracy_media, 'precision': precision_media, 'recall': recall_media, 'f1': f1_media}
     
