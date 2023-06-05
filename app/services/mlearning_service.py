@@ -235,6 +235,11 @@ class MLearningService:
         print(f"Root Mean Squared Error (RMSE): {rmse_scores}")
         print(f"R-squared (R2): {r2_scores}")
 
+        modelo.fit(self.x, self.y)
+
+        # Guardar el modelo entrenado
+        self.guardar_modelo(modelo, 'regresion_lineal')
+
         return {'Mean Squared Error (MSE)': list(mse_scores), 
                 'Root Mean Squared Error (RMSE)': list(rmse_scores), 
                 'R-squared (R2)': list(r2_scores)}
