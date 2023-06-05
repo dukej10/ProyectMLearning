@@ -22,9 +22,9 @@ class MLearningController:
         elif entrenamiento.nombre_algoritmo == "SVM":
             pass
         elif entrenamiento.nombre_algoritmo == "ARBOLDEDECISION":
-            return self.utils.prueba(msg="Métricas algormitmo Regresion Logistica",datos=self.mlearning_service.arbol_decision(entrenamiento))
+            return self.utils.prueba(msg="Métricas algormitmo Regresion Árbol de decisión",datos=self.mlearning_service.arbol_decision(entrenamiento))
         elif entrenamiento.nombre_algoritmo == "REGRESIONLINEAL":
-            return self.utils.prueba(msg="Métricas algormitmo Regresion Logistica",datos=self.mlearning_service.regresion_lineal(entrenamiento))
+            return self.utils.prueba(msg="Métricas algormitmo Regresion Lineal",datos=self.mlearning_service.regresion_lineal(entrenamiento))
         else:
             return "Algoritmo no encontrado"
         
