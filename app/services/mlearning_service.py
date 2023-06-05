@@ -94,16 +94,17 @@ class MLearningService:
                         self.yPredict = self.modeloKNN.predict(self.XTest)
                         print("-----------------yPredict-------------------")
                         #self.identificar_overffing_underffing(self.modeloKNN)
-                        if self.obtener_matriz_confusion('knn') is None:
+                        matriz = self.obtener_matriz_confusion('knn')
+                        if  matriz is None:
                             return "error"
                         metricas =self.metricas_hold_out()
-                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                         return metricas
                     elif entrenamiento.tecnica == "cross-validation":
                         #print("cantidad", entrenamiento.cantidad)
                         self.modeloKNN = KNeighborsClassifier(n_neighbors=self.find_best_n_neighbors())
-                        metricas = self.validacion_cruzada(self.modeloKNN, entrenamiento.cantidad, 'knn')
-                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                        metricas, matriz = self.validacion_cruzada(self.modeloKNN, entrenamiento.cantidad, 'knn')
+                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                         return metricas
                 else:
                     return "error"
@@ -124,16 +125,17 @@ class MLearningService:
                     self.guardar_modelo(self.modeloRegLog, 'reglog')
                     #print("Entreno")
                     self.yPredict = self.modeloRegLog.predict(self.XTest)
-                    self.identificar_overffing_underffing(self.modeloRegLog)
-                    if self.obtener_matriz_confusion('reglog') is None:
+                    #self.identificar_overffing_underffing(self.modeloRegLog)
+                    matriz = self.obtener_matriz_confusion('reglog')
+                    if  matriz is None:
                         return "error"
                     metricas =self.metricas_hold_out()
-                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     self.modeloRegLog = LogisticRegression()
-                    metricas = self.validacion_cruzada(self.modeloRegLog, entrenamiento.cantidad, 'reglog')
-                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    metricas,matriz = self.validacion_cruzada(self.modeloRegLog, entrenamiento.cantidad, 'reglog')
+                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
         return "ok"
     
@@ -213,8 +215,8 @@ class MLearningService:
             print("Error en la preparación del dataframe: ", e)
             return  None
 
-    def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas):
-        info = {'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
+    def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas, matriz):
+        info = {'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
         id = self.mongo_service.guardar_json_metricas(info, 'InformacionModelos')
         print("ID ", id)
 
@@ -282,7 +284,7 @@ class MLearningService:
             os.makedirs(ruta_guardado, exist_ok=True)
             plt.savefig(os.path.join(ruta_guardado, f"{nombre_modelo}-ho-matriz_confusion.png"))
             plt.close()
-            return True
+            return matrizKNN
         except Exception as e:
             return None
 
@@ -380,7 +382,7 @@ class MLearningService:
         # plt.ylabel("Etiquetas Verdaderas")
 
 
-        return {'accuracy': accuracy_media, 'precision': precision_media, 'recall': recall_media, 'f1': f1_media}
+        return {'accuracy': accuracy_media, 'precision': precision_media, 'recall': recall_media, 'f1': f1_media}, matriz_confusion
     
     def guardar_modelo(self, modelo, nombre_modelo):
         #print(self.XTest.columns)
