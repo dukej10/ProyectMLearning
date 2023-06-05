@@ -171,10 +171,11 @@ class MLearningService:
                     modelo.fit(self.XTrain, self.yTrain)
                     self.guardar_modelo(modelo, 'arbol_decision')
                     self.yPredict = modelo.predict(self.XTest)
-                    if self.obtener_matriz_confusion('arbol_decision') is None:
+                    matriz = self.obtener_matriz_confusion('arbol_decision')
+                    if  matriz is None:
                         return "error"
-                    metricas = self.metricas_hold_out()
-                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    metricas =  self.metricas_hold_out()
+                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz)
                     return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     metricas = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'arbol_decision')
@@ -488,63 +489,66 @@ class MLearningService:
             return None
         
     def prediccion(self, prediccion: PrediccionModel):
-        datos = self.mongo_service.obtener_ultimo_registro('RepresentacionCodificacion')
-        prediccion.area = self.utils.arreglar_nombre(prediccion.area)
-        prediccion.categoria = self.utils.arreglar_nombre(prediccion.categoria)
-        prediccion.agrupa = self.utils.arreglar_nombre(prediccion.agrupa)
-        prediccion.genero = self.utils.arreglar_nombre(prediccion.genero)
-        prediccion.mes = self.utils.arreglar_nombre(prediccion.mes)
-        if datos:
-            for data in datos["datosX"]:
-                # print(data['mes'])
-                for info in data:
-                    for i in range(0, len(data[info])):
-                        pdata = self.utils.arreglar_nombre(data[info][i]['valor_original'])
-                        if pdata == prediccion.area:
-                            prediccion.area = data[info][i]["valor_codificado"]
-                        elif pdata == prediccion.categoria:
-                            prediccion.categoria = data[info][i]["valor_codificado"]
-                        elif pdata == prediccion.agrupa:
-                            prediccion.agrupa = data[info][i]["valor_codificado"]
-                        elif pdata == prediccion.genero:
-                            prediccion.genero = data[info][i]["valor_codificado"]
-                        elif pdata == prediccion.mes:
-                            prediccion.mes = data[info][i]["valor_codificado"]
-            ejemplo_prueba = pd.DataFrame({
-                    'Area': [prediccion.area],
-                    'Categoria': [prediccion.categoria],
-                    'genero': [prediccion.genero],
-                    'agrupa': [prediccion.agrupa],
-                    'valor': [prediccion.valor],
-                    'año': [prediccion.año],
-                    'mes': [prediccion.mes]
-                })
-            # Cargar el modelo desde el archivo
-            ruta_modelo = 'app/files/modelos/'
-            prediccion.algoritmo = self.utils.arreglar_nombre(prediccion.algoritmo)
-            if prediccion.algoritmo == 'KNN':
-                ruta_modelo += 'knn.pkl'
-            elif prediccion.algoritmo == 'SVM':
-                ruta_modelo += 'svm.pkl'
-            elif prediccion.algoritmo == 'NAIVEBAYES':
-                ruta_modelo += 'naivebayes.pkl'
-            elif prediccion.algoritmo == 'REGRESIONLOGISTICA':
-                ruta_modelo += 'reglog.pkl'
-            elif prediccion.algoritmo == 'ARBOLDEDECISION':
-                ruta_modelo += 'arbol_decision.pkl'
-            elif prediccion.algoritmo == 'REGRESIONLINEAL':
-                ruta_modelo += 'regresion_lineal.pkl'
+        try:
+            datos = self.mongo_service.obtener_ultimo_registro('RepresentacionCodificacion')
+            prediccion.area = self.utils.arreglar_nombre(prediccion.area)
+            prediccion.categoria = self.utils.arreglar_nombre(prediccion.categoria)
+            prediccion.agrupa = self.utils.arreglar_nombre(prediccion.agrupa)
+            prediccion.genero = self.utils.arreglar_nombre(prediccion.genero)
+            prediccion.mes = self.utils.arreglar_nombre(prediccion.mes)
+            if datos:
+                for data in datos["datosX"]:
+                    # print(data['mes'])
+                    for info in data:
+                        for i in range(0, len(data[info])):
+                            pdata = self.utils.arreglar_nombre(data[info][i]['valor_original'])
+                            if pdata == prediccion.area:
+                                prediccion.area = data[info][i]["valor_codificado"]
+                            elif pdata == prediccion.categoria:
+                                prediccion.categoria = data[info][i]["valor_codificado"]
+                            elif pdata == prediccion.agrupa:
+                                prediccion.agrupa = data[info][i]["valor_codificado"]
+                            elif pdata == prediccion.genero:
+                                prediccion.genero = data[info][i]["valor_codificado"]
+                            elif pdata == prediccion.mes:
+                                prediccion.mes = data[info][i]["valor_codificado"]
+                ejemplo_prueba = pd.DataFrame({
+                        'Area': [prediccion.area],
+                        'Categoria': [prediccion.categoria],
+                        'genero': [prediccion.genero],
+                        'agrupa': [prediccion.agrupa],
+                        'valor': [prediccion.valor],
+                        'año': [prediccion.año],
+                        'mes': [prediccion.mes]
+                    })
+                # Cargar el modelo desde el archivo
+                ruta_modelo = 'app/files/modelos/'
+                prediccion.algoritmo = self.utils.arreglar_nombre(prediccion.algoritmo)
+                if prediccion.algoritmo == 'KNN':
+                    ruta_modelo += 'knn.pkl'
+                elif prediccion.algoritmo == 'SVM':
+                    ruta_modelo += 'svm.pkl'
+                elif prediccion.algoritmo == 'NAIVEBAYES':
+                    ruta_modelo += 'naivebayes.pkl'
+                elif prediccion.algoritmo == 'REGRESIONLOGISTICA':
+                    ruta_modelo += 'reglog.pkl'
+                elif prediccion.algoritmo == 'ARBOLDEDECISION':
+                    ruta_modelo += 'arbol_decision.pkl'
+                elif prediccion.algoritmo == 'REGRESIONLINEAL':
+                    ruta_modelo += 'regresion_lineal.pkl'
 
-            with open(ruta_modelo, 'rb') as archivo:
-                modelo_cargado = pickle.load(archivo)
-            
-            #Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
-            prediccion = modelo_cargado.predict(ejemplo_prueba)
-            for data in datos["datosY"]:
-                print("ENTRO")
-                if data["valor_codificado"] == round(prediccion[0]):
-                        prediccion = data["valor_original"]
-                        break            
-            return f"La predicción es: {prediccion}"
-        else:
-            return "No hay datos para hacer la prediccion"
+                with open(ruta_modelo, 'rb') as archivo:
+                    modelo_cargado = pickle.load(archivo)
+                
+                #Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
+                prediccion = modelo_cargado.predict(ejemplo_prueba)
+                for data in datos["datosY"]:
+                    print("ENTRO")
+                    if data["valor_codificado"] == round(prediccion[0]):
+                            prediccion = data["valor_original"]
+                            break            
+                return f"La predicción es: {prediccion}"
+            else:
+                return "No hay datos para hacer la prediccion"
+        except FileNotFoundError as e:
+            return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}"
