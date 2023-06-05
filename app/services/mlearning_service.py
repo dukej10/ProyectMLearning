@@ -175,7 +175,7 @@ class MLearningService:
                     if  matriz is None:
                         return "error"
                     metricas =  self.metricas_hold_out()
-                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz)
+                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     metricas = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'arbol_decision')
