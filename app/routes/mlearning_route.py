@@ -5,7 +5,6 @@ from app.Controllers.file_controller import FileController
 from fastapi import Body
 from app.models.prediccion_model import PrediccionModel
 
-from app.models.todos_model import Todo
 from app.models.entrenamiento_model import InfoEntrenamiento
 from bson import ObjectId
 from fastapi.responses import JSONResponse
@@ -22,9 +21,6 @@ mlearning_controller = MLearningController()
 async def get_todos():
     return {"msg":"todos"}
 
-# @todo_api_router.get("/{id}")
-# async def get_todo(id: str):
-#     return {"msg":"obtener"}
 
 @todo_api_router.get("/histograma")
 async def get_histogram():
@@ -48,7 +44,7 @@ def descarte():
 def imputacion():
     return processing_controller.imputation_data()
 
-@todo_api_router.get('/generar-imagenes')
+@todo_api_router.get('/generar-imagenes', description="Genera las imagenes de analisis de los datos histograma y matriz")
 def generar_imagenes():
     return processing_controller.generar_imagenes_analisis()
 
@@ -58,23 +54,9 @@ async def upload_file(file: UploadFile = File(...)):
     # Process the uploaded file
     return await file_controller.upload_file(file)
 
-# post
-@todo_api_router.post("/")
-async def create_todo(todo: Todo):
-    return {"msg":"crear"}
-
-@todo_api_router.get("/tipos-datos")
+@todo_api_router.get("/tipos-datos", description="Obtiene los tipos de datos de los datos del dataset")
 async def get_types():
     return processing_controller.get_types()
-# update
-@todo_api_router.put("/{id}")
-async def update_todo(id: str, todo: Todo):
-    return {"msg":"actualizar"}
-# delete
-@todo_api_router.delete("/{id}")
-async def delete_todo(id: str):
-    
-    return {"status": "ok"}
 
 @todo_api_router.get("/knn")
 async def knn():
@@ -105,6 +87,10 @@ async def matriz_confusional(nombre_algoritmo: str):
         return FileResponse(img_path)
     else:
        return img_path
+    
+@todo_api_router.get("/metricas-algoritmos-entrenados", description="Permite obtener las métricas que obtuvieron los algoritmos entrenados")
+async def metricas_algoritmos_entrenados():
+    return processing_controller.metricas_algoritmos_entrenados()
 
 @todo_api_router.post("/prediccion", description="Predicción de algoritmo \n  nombre_algoritmo: nombre del algoritmo a utilizar, columnas_x: variables a usar para x, objetivo_y: columna objetivo, tecnica: hold-out o cross-validation, cantidad: % partición dataset o número de folds para cv, normalizacion: min-max o standarscaler")
 async def prediccion_algoritmo(prediccion: PrediccionModel= Body(..., example={

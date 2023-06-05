@@ -56,4 +56,9 @@ class ProcessingController:
     
     async def obtener_matriz_confusion(self, nombre_modelo):
         return self.processing_service.obtener_ultima_matriz_confusion_algoritmo(nombre_modelo)
+    
+    def metricas_algoritmos_entrenados(self):
+
+        return self.processing_service.obtener_metricas_algoritmos()
+
         

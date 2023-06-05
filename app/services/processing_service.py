@@ -244,3 +244,18 @@ class ProcessingService:
             return img
         except FileNotFoundError as e:
             return {'mensaje':f'Error al obtener la imagen del histograma: {str(e)}'}, 404
+        
+    def obtener_metricas_algoritmos(self):
+            metricas =self.mongo_service.obtener_registros_metricas_recientes('InformacionModelos')
+            datos = []
+            #print(metricas)
+            if metricas is not None:
+                if len(metricas) > 0:
+                    for  data in metricas:
+                        datos.append({'nombre_algoritmo': data['nombre_algoritmo'], 'normalizacion': data['normalizacion'], 'tecnica': data['tecnica'], 'metricas': data['metricas']})
+                        #print(datos)
+                    return self.utils.prueba(msg="Se encontraron metricas", datos=datos)
+                else:
+                    return self.utils.prueba(msg="No se encontraron metricas"), 200
+            else:
+                return self.utils.prueba(msg="Error al obtener las metricas"), 404
