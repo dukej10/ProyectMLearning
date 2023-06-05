@@ -141,15 +141,11 @@ class MLearningService:
         return "ok"
     
     def find_best_n_neighbors(self):
-        best_score = 0
-        best_n_neighbors = 0
-        for n_neighbors in range(1, 10):
-            knn = KNeighborsClassifier(n_neighbors=n_neighbors)
-            scores = cross_val_score(knn, self.x, self.y, cv=5)
-            mean_score = scores.mean()
-            if mean_score > best_score:
-                best_score = mean_score
-                best_n_neighbors = n_neighbors
+        param_grid = {'n_neighbors': [1, 3, 5, 7, 9, 11, 13, 15, 17]}
+        knn = KNeighborsClassifier()
+        grid_search = GridSearchCV(knn, param_grid)
+        grid_search.fit(self.x, self.y)
+        best_n_neighbors = grid_search.best_params_['n_neighbors']
         return best_n_neighbors
     
     # def mejores_parametros_regresion_log(self):
