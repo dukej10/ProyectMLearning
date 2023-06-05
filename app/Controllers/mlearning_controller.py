@@ -11,20 +11,22 @@ class MLearningController:
         self.utils = Utils()
 
     def algoritmos(self, entrenamiento: InfoEntrenamiento):
-        if entrenamiento.nombre_algoritmo.upper() == "KNN":
-            return self.utils.prueba(msg="métricas algormitmo KNN",datos=self.mlearning_service.knn(entrenamiento))
-        elif entrenamiento.nombre_algoritmo.upper() == "NAIVE BAYES":
+        entrenamiento.nombre_algoritmo = self.utils.arreglar_nombre(entrenamiento.nombre_algoritmo)
+        if entrenamiento.nombre_algoritmo == "KNN":
+            return self.utils.prueba(msg="Métricas algormitmo KNN",datos=self.mlearning_service.knn(entrenamiento))
+        elif entrenamiento.nombre_algoritmo == "NAIVEBAYES":
             pass
-        elif entrenamiento.nombre_algoritmo.upper() == "REGRESION LOGISTICA":
-            return self.mlearning_service.regresion_logistica(entrenamiento)
-        elif entrenamiento.nombre_algoritmo.upper() == "SVM":
+        elif entrenamiento.nombre_algoritmo == "REGRESIONLOGISTICA":
+            return self.utils.prueba(msg="Métricas algormitmo Regresion Logistica",datos=self.mlearning_service.regresion_logistica(entrenamiento))
+        elif entrenamiento.nombre_algoritmo == "SVM":
             pass
-        elif entrenamiento.nombre_algoritmo.upper() == "ARBOL DE DECISION":
+        elif entrenamiento.nombre_algoritmo == "ARBOLDEDECISION":
             pass
-        elif entrenamiento.nombre_algoritmo.upper() == "REGRESION LINEAL":
+        elif entrenamiento.nombre_algoritmo == "REGRESIONLINEAL":
             pass
         else:
             return "Algoritmo no encontrado"
         
     def prediccion(self, prediccion: PrediccionModel):
         return self.mlearning_service.prediccion(prediccion)
+   

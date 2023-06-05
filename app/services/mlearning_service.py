@@ -1,3 +1,4 @@
+import glob
 import os
 import pickle
 from matplotlib import pyplot as plt
@@ -211,7 +212,7 @@ class MLearningService:
         except Exception as e:
             print("Error en la preparación del dataframe: ", e)
             return  None
-        
+
     def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas):
         info = {'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
         id = self.mongo_service.guardar_json_metricas(info, 'InformacionModelos')
@@ -395,20 +396,26 @@ class MLearningService:
         
     def prediccion(self, prediccion: PrediccionModel):
         datos = self.mongo_service.obtener_ultimo_registro('RepresentacionCodificacion')
+        prediccion.area = self.utils.arreglar_nombre(prediccion.area)
+        prediccion.categoria = self.utils.arreglar_nombre(prediccion.categoria)
+        prediccion.agrupa = self.utils.arreglar_nombre(prediccion.agrupa)
+        prediccion.genero = self.utils.arreglar_nombre(prediccion.genero)
+        prediccion.mes = self.utils.arreglar_nombre(prediccion.mes)
         if datos:
             for data in datos["datosX"]:
                 # print(data['mes'])
                 for info in data:
                     for i in range(0, len(data[info])):
-                        if data[info][i]["valor_original"] == prediccion.area:
+                        pdata = self.utils.arreglar_nombre(data[info][i]['valor_original'])
+                        if pdata == prediccion.area:
                             prediccion.area = data[info][i]["valor_codificado"]
-                        elif data[info][i]["valor_original"] == prediccion.categoria:
+                        elif pdata == prediccion.categoria:
                             prediccion.categoria = data[info][i]["valor_codificado"]
-                        elif data[info][i]["valor_original"] == prediccion.agrupa:
+                        elif pdata == prediccion.agrupa:
                             prediccion.agrupa = data[info][i]["valor_codificado"]
-                        elif data[info][i]["valor_original"] == prediccion.genero:
+                        elif pdata == prediccion.genero:
                             prediccion.genero = data[info][i]["valor_codificado"]
-                        elif data[info][i]["valor_original"] == prediccion.mes:
+                        elif pdata == prediccion.mes:
                             prediccion.mes = data[info][i]["valor_codificado"]
             ejemplo_prueba = pd.DataFrame({
                     'area': [prediccion.area],
@@ -421,17 +428,18 @@ class MLearningService:
                 })
             # Cargar el modelo desde el archivo
             ruta_modelo = 'app/files/modelos/'
-            if prediccion.algoritmo.upper().replace(" ", "") == 'KNN':
+            prediccion.algoritmo = self.utils.arreglar_nombre(prediccion.algoritmo)
+            if prediccion.algoritmo == 'KNN':
                 ruta_modelo += 'knn.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'SVM':
+            elif prediccion.algoritmo == 'SVM':
                 ruta_modelo += 'svm.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'NAIVEBAYES':
+            elif prediccion.algoritmo == 'NAIVEBAYES':
                 ruta_modelo += 'naivebayes.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'REGRESIONLOGISTICA':
+            elif prediccion.algoritmo == 'REGRESIONLOGISTICA':
                 ruta_modelo += 'reglog.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'ARBOLDEDECISION':
+            elif prediccion.algoritmo == 'ARBOLDEDECISION':
                 ruta_modelo += 'arboldedicion.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'REGRESIONLINEAL':
+            elif prediccion.algoritmo == 'REGRESIONLINEAL':
                 ruta_modelo += 'regresionlineal.pkl'
 
             with open(ruta_modelo, 'rb') as archivo:
