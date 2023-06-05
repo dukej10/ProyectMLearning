@@ -19,7 +19,7 @@ mlearning_controller = MLearningController()
 # retrieve
 @todo_api_router.get("/")
 async def get_todos():
-    return {"msg":"todos"}
+    return FileResponse("app/templates/index.html")
 
 
 @todo_api_router.get("/histograma")
