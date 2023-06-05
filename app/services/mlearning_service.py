@@ -1,3 +1,4 @@
+import datetime
 import glob
 import os
 import pickle
@@ -216,7 +217,8 @@ class MLearningService:
             return  None
 
     def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas, matriz):
-        info = {'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
+        fecha_actual = datetime.datetime.now().strftime('%d-%m-%Y')
+        info = {'fecha':fecha_actual,'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
         id = self.mongo_service.guardar_json_metricas(info, 'InformacionModelos')
         print("ID ", id)
 
