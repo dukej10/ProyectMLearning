@@ -28,10 +28,10 @@ class DataframeService:
         valores_originales = dataframe[colsAll].copy()
         print("COLUMNAS ", cat_colsAll)
         for col in cat_colsAll:
-                print("COL ", col)
+                # print("COL ", col)
                 # if col in cat_colsAll:
                 dataframe[col] = encoder.fit_transform(dataframe[col])
-                print("CODIFICADO ", col)
+                # print("CODIFICADO ", col)
                 # Obtener los valores originales correspondientes a cada valor codificado
                 valores_originales[col] = encoder.inverse_transform(dataframe[col])
                 # else:
