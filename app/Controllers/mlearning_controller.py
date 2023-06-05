@@ -1,16 +1,18 @@
 from app.models.entrenamiento_model import InfoEntrenamiento
 from app.models.prediccion_model import PrediccionModel
 from app.services.mlearning_service import MLearningService
+from app.utils.utils import Utils
 
 
 class MLearningController:
 
     def __init__(self):
         self.mlearning_service = MLearningService()
+        self.utils = Utils()
 
     def algoritmos(self, entrenamiento: InfoEntrenamiento):
         if entrenamiento.nombre_algoritmo.upper() == "KNN":
-            return self.mlearning_service.knn(entrenamiento)
+            return self.utils.prueba(msg="métricas algormitmo KNN",datos=self.mlearning_service.knn(entrenamiento))
         elif entrenamiento.nombre_algoritmo.upper() == "NAIVE BAYES":
             pass
         elif entrenamiento.nombre_algoritmo.upper() == "REGRESION LOGISTICA":
