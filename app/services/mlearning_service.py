@@ -128,12 +128,12 @@ class MLearningService:
                         return "error"
                     metricas =self.metricas_hold_out()
                     self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     self.modeloRegLog = LogisticRegression()
                     metricas = self.validacion_cruzada(self.modeloRegLog, entrenamiento.cantidad, 'reglog')
                     self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    return metricas
         return "ok"
     
     def find_best_n_neighbors(self):
