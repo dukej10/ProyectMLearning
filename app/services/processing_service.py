@@ -1,3 +1,4 @@
+import glob
 import os
 from flask import send_file
 from matplotlib import pyplot as plt
@@ -196,6 +197,33 @@ class ProcessingService:
                 return None
         except FileNotFoundError as e:
             return f'No se encontró la imagen {str(e)}', 404
+        
+    def obtener_ultima_matriz_confusion_algoritmo(self,nombre:str):
+        try:
+            if nombre.upper().replace(" ", "") == 'REGRESIONLOGISTICA':
+                nombre = 'reglog'
+            elif nombre.upper().replace(" ", "") == 'KNN':
+                nombre = 'knn'
+            # Obtener la lista de archivos que coinciden con el nombre proporcionado
+            archivos = glob.glob(f"app/files/imgs/modelos/matrices_correlacion/{nombre}*.png")
+            aux = []
+            print("ARCHIVOS ", archivos)
+            for archivo in archivos:
+                archivo = archivo.replace('\\', '/')
+                aux.append(archivo)
+            archivos = aux
+            print("ARCHIVOS ", archivos)
+            # Ordenar la lista de archivos por fecha de modificación descendente
+            archivos.sort(key=os.path.getmtime, reverse=True)
+
+            # Verificar si se encontraron archivos
+            if archivos:
+                # Devolver la ruta de la última imagen generada
+                return archivos[0]
+            else:
+                return {'mensaje':f"No se encontraron matriz de confusion para el algoritmo {nombre}."}, 404
+        except FileNotFoundError as e:
+                return {'mensaje':f"Error al obtener la matriz de confusion del algoritmo {nombre}."}, 500
     
     def obtener_imagen_matriz(self):
         try:
@@ -216,3 +244,18 @@ class ProcessingService:
             return img
         except FileNotFoundError as e:
             return {'mensaje':f'Error al obtener la imagen del histograma: {str(e)}'}, 404
+        
+    def obtener_metricas_algoritmos(self):
+            metricas =self.mongo_service.obtener_registros_metricas_recientes('InformacionModelos')
+            datos = []
+            #print(metricas)
+            if metricas is not None:
+                if len(metricas) > 0:
+                    for  data in metricas:
+                        datos.append({'nombre_algoritmo': data['nombre_algoritmo'], 'normalizacion': data['normalizacion'], 'tecnica': data['tecnica'], 'metricas': data['metricas']})
+                        #print(datos)
+                    return self.utils.prueba(msg="Se encontraron metricas", datos=datos)
+                else:
+                    return self.utils.prueba(msg="No se encontraron metricas"), 200
+            else:
+                return self.utils.prueba(msg="Error al obtener las metricas"), 404

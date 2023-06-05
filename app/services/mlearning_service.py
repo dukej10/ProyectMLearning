@@ -1,3 +1,5 @@
+import datetime
+import glob
 import os
 import pickle
 from matplotlib import pyplot as plt
@@ -102,17 +104,18 @@ class MLearningService:
                         self.yPredict = self.modeloKNN.predict(self.XTest)
                         print("-----------------yPredict-------------------")
                         #self.identificar_overffing_underffing(self.modeloKNN)
-                        if self.obtener_matriz_confusion('knn') is None:
+                        matriz = self.obtener_matriz_confusion('knn')
+                        if  matriz is None:
                             return "error"
                         metricas =self.metricas_hold_out()
-                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                        return "ok"
+                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                        return metricas
                     elif entrenamiento.tecnica == "cross-validation":
                         #print("cantidad", entrenamiento.cantidad)
-                        self.modeloKNN = KNeighborsClassifier()
-                        metricas = self.validacion_cruzada(self.modeloKNN, entrenamiento.cantidad, 'knn')
-                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                        return "ok"
+                        self.modeloKNN = KNeighborsClassifier(n_neighbors=self.find_best_n_neighbors())
+                        metricas, matriz = self.validacion_cruzada(self.modeloKNN, entrenamiento.cantidad, 'knn')
+                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                        return metricas
                 else:
                     return "error"
             else:
@@ -132,19 +135,30 @@ class MLearningService:
                     self.guardar_modelo(self.modeloRegLog, 'reglog')
                     #print("Entreno")
                     self.yPredict = self.modeloRegLog.predict(self.XTest)
-                    self.identificar_overffing_underffing(self.modeloRegLog)
-                    if self.obtener_matriz_confusion('reglog') is None:
+                    #self.identificar_overffing_underffing(self.modeloRegLog)
+                    matriz = self.obtener_matriz_confusion('reglog')
+                    if  matriz is None:
                         return "error"
                     metricas =self.metricas_hold_out()
-                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     self.modeloRegLog = LogisticRegression()
-                    metricas = self.validacion_cruzada(self.modeloRegLog, entrenamiento.cantidad, 'reglog')
-                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    metricas,matriz = self.validacion_cruzada(self.modeloRegLog, entrenamiento.cantidad, 'reglog')
+                    self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    return metricas
         return "ok"
     
+    def find_best_n_neighbors(self):
+        param_grid = {'n_neighbors': [1, 3, 5, 7, 9, 11, 13, 15, 17]}
+        knn = KNeighborsClassifier()
+        grid_search = GridSearchCV(knn, param_grid)
+        grid_search.fit(self.x, self.y)
+        best_n_neighbors = grid_search.best_params_['n_neighbors']
+        return best_n_neighbors
+    
+    # def mejores_parametros_regresion_log(self):
+    #     print("entro a mejores parametros")
     def arbol_decision(self, entrenamiento: InfoEntrenamiento):
         validaciones = self.validaciones(entrenamiento)
         if validaciones is True:
@@ -155,16 +169,18 @@ class MLearningService:
                 if entrenamiento.tecnica == "hold-out":
                     self.particion_dataset(dataframe, entrenamiento.cantidad)
                     modelo.fit(self.XTrain, self.yTrain)
+                    self.guardar_modelo(modelo, 'arbol_decision')
                     self.yPredict = modelo.predict(self.XTest)
-                    if self.obtener_matriz_confusion('arbol_decision') is None:
+                    matriz = self.obtener_matriz_confusion('arbol_decision')
+                    if  matriz is None:
                         return "error"
-                    metricas = self.metricas_hold_out()
-                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    metricas =  self.metricas_hold_out()
+                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz)
+                    return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     metricas = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'arbol_decision')
                     self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    return metricas
             else:
                 return "error"
         else:
@@ -180,17 +196,18 @@ class MLearningService:
                     modelo = LinearRegression()
                     self.particion_dataset(dataframe, entrenamiento.cantidad)
                     modelo.fit(self.XTrain, self.yTrain)
+                    self.guardar_modelo(modelo, 'regresion_lineal')
                     self.yPredict = modelo.predict(self.XTest)
                     #if self.obtener_matriz_confusion('regresion_lineal') is None:
                         #return "error"
                     metricas = self.metricas_hold_out_regresionLineal()
-                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, None)
+                    return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     modelo = LinearRegression()
                     metricas = self.validacion_cruzada_regresionLineal(modelo, entrenamiento.cantidad)
-                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, None)
+                    return metricas
             #else:
                 #return "error"
         #else:
@@ -217,6 +234,11 @@ class MLearningService:
         print(f"Mean Squared Error (MSE): {mse_scores}")
         print(f"Root Mean Squared Error (RMSE): {rmse_scores}")
         print(f"R-squared (R2): {r2_scores}")
+
+        modelo.fit(self.x, self.y)
+
+        # Guardar el modelo entrenado
+        self.guardar_modelo(modelo, 'regresion_lineal')
 
         return {'Mean Squared Error (MSE)': list(mse_scores), 
                 'Root Mean Squared Error (RMSE)': list(rmse_scores), 
@@ -286,10 +308,14 @@ class MLearningService:
         except Exception as e:
             print("Error en la preparación del dataframe: ", e)
             return  None
-        
-    def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas):
-        info = {'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
-        id = self.mongo_service.guardar_json(info, 'InformacionModelos')
+
+    def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas, matriz):
+        fecha_actual = datetime.datetime.now().strftime('%d-%m-%Y')
+        if matriz is not None:
+            info = {'fecha':fecha_actual,'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
+        else:    
+            info = {'fecha':fecha_actual,'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
+        id = self.mongo_service.guardar_json_metricas(info, 'InformacionModelos')
         print("ID ", id)
 
     def distribucion_normal(self, dataframe):
@@ -356,7 +382,7 @@ class MLearningService:
             os.makedirs(ruta_guardado, exist_ok=True)
             plt.savefig(os.path.join(ruta_guardado, f"{nombre_modelo}-ho-matriz_confusion.png"))
             plt.close()
-            return True
+            return matrizKNN
         except Exception as e:
             return None
 
@@ -434,6 +460,13 @@ class MLearningService:
         y_pred = cross_val_predict(modelo, self.x, self.y, cv=cv)
         matriz_confusion = confusion_matrix(self.y, y_pred)
 
+        modelo.fit(self.x, self.y)
+
+        # Guardar el modelo entrenado
+        self.guardar_modelo(modelo, 'knn')
+
+        #Guardar modelo
+
         # Visualizar la matriz de confusión
         #plt.figure(figsize=(8, 6))
         sb.heatmap(matriz_confusion, annot=True, fmt='d', cmap='Blues')
@@ -445,7 +478,8 @@ class MLearningService:
         # plt.xlabel("Predicciones")
         # plt.ylabel("Etiquetas Verdaderas")
 
-        return {'accuracy': accuracy_media, 'precision': precision_media, 'recall': recall_media, 'f1': f1_media}
+
+        return {'accuracy': accuracy_media, 'precision': precision_media, 'recall': recall_media, 'f1': f1_media}, matriz_confusion
     
     def guardar_modelo(self, modelo, nombre_modelo):
         #print(self.XTest.columns)
@@ -460,55 +494,66 @@ class MLearningService:
             return None
         
     def prediccion(self, prediccion: PrediccionModel):
-        datos = self.mongo_service.obtener_ultimo_registro('RepresentacionCodificacion')
-        if datos:
-            for data in datos["datosX"]:
-                # print(data['mes'])
-                for info in data:
-                    for i in range(0, len(data[info])):
-                        if data[info][i]["valor_original"] == prediccion.area:
-                            prediccion.area = data[info][i]["valor_codificado"]
-                        elif data[info][i]["valor_original"] == prediccion.categoria:
-                            prediccion.categoria = data[info][i]["valor_codificado"]
-                        elif data[info][i]["valor_original"] == prediccion.agrupa:
-                            prediccion.agrupa = data[info][i]["valor_codificado"]
-                        elif data[info][i]["valor_original"] == prediccion.genero:
-                            prediccion.genero = data[info][i]["valor_codificado"]
-                        elif data[info][i]["valor_original"] == prediccion.mes:
-                            prediccion.mes = data[info][i]["valor_codificado"]
-            ejemplo_prueba = pd.DataFrame({
-                    'area': [prediccion.area],
-                    'categoria': [prediccion.categoria],
-                    'genero': [prediccion.genero],
-                    'agrupa': [prediccion.agrupa],
-                    'valor': [prediccion.valor],
-                    'año': [prediccion.año],
-                    'mes': [prediccion.mes]
-                })
-            # Cargar el modelo desde el archivo
-            ruta_modelo = 'app/files/modelos/'
-            if prediccion.algoritmo.upper().replace(" ", "") == 'KNN':
-                ruta_modelo += 'knn.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'SVM':
-                ruta_modelo += 'svm.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'NAIVEBAYES':
-                ruta_modelo += 'naivebayes.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'REGRESIONLOGISTICA':
-                ruta_modelo += 'reglog.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'ARBOLDEDECISION':
-                ruta_modelo += 'arboldedicion.pkl'
-            elif prediccion.algoritmo.upper().replace(" ", "") == 'REGRESIONLINEAL':
-                ruta_modelo += 'regresionlineal.pkl'
+        try:
+            datos = self.mongo_service.obtener_ultimo_registro('RepresentacionCodificacion')
+            prediccion.area = self.utils.arreglar_nombre(prediccion.area)
+            prediccion.categoria = self.utils.arreglar_nombre(prediccion.categoria)
+            prediccion.agrupa = self.utils.arreglar_nombre(prediccion.agrupa)
+            prediccion.genero = self.utils.arreglar_nombre(prediccion.genero)
+            prediccion.mes = self.utils.arreglar_nombre(prediccion.mes)
+            if datos:
+                for data in datos["datosX"]:
+                    # print(data['mes'])
+                    for info in data:
+                        for i in range(0, len(data[info])):
+                            pdata = self.utils.arreglar_nombre(data[info][i]['valor_original'])
+                            if pdata == prediccion.area:
+                                prediccion.area = data[info][i]["valor_codificado"]
+                            elif pdata == prediccion.categoria:
+                                prediccion.categoria = data[info][i]["valor_codificado"]
+                            elif pdata == prediccion.agrupa:
+                                prediccion.agrupa = data[info][i]["valor_codificado"]
+                            elif pdata == prediccion.genero:
+                                prediccion.genero = data[info][i]["valor_codificado"]
+                            elif pdata == prediccion.mes:
+                                prediccion.mes = data[info][i]["valor_codificado"]
+                ejemplo_prueba = pd.DataFrame({
+                        'Area': [prediccion.area],
+                        'Categoria': [prediccion.categoria],
+                        'genero': [prediccion.genero],
+                        'agrupa': [prediccion.agrupa],
+                        'valor': [prediccion.valor],
+                        'año': [prediccion.año],
+                        'mes': [prediccion.mes]
+                    })
+                # Cargar el modelo desde el archivo
+                ruta_modelo = 'app/files/modelos/'
+                prediccion.algoritmo = self.utils.arreglar_nombre(prediccion.algoritmo)
+                if prediccion.algoritmo == 'KNN':
+                    ruta_modelo += 'knn.pkl'
+                elif prediccion.algoritmo == 'SVM':
+                    ruta_modelo += 'svm.pkl'
+                elif prediccion.algoritmo == 'NAIVEBAYES':
+                    ruta_modelo += 'naivebayes.pkl'
+                elif prediccion.algoritmo == 'REGRESIONLOGISTICA':
+                    ruta_modelo += 'reglog.pkl'
+                elif prediccion.algoritmo == 'ARBOLDEDECISION':
+                    ruta_modelo += 'arbol_decision.pkl'
+                elif prediccion.algoritmo == 'REGRESIONLINEAL':
+                    ruta_modelo += 'regresion_lineal.pkl'
 
-            with open(ruta_modelo, 'rb') as archivo:
-                modelo_cargado = pickle.load(archivo)
-            
-            #Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
-            prediccion = modelo_cargado.predict(ejemplo_prueba)
-            for data in datos["datosY"]:
-                if data["valor_codificado"] == prediccion[0]:
-                        prediccion = data["valor_original"]
-                        break            
-            return f"La predicción es: {prediccion}"
-        else:
-            return "No hay datos para hacer la prediccion"
+                with open(ruta_modelo, 'rb') as archivo:
+                    modelo_cargado = pickle.load(archivo)
+                
+                #Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
+                prediccion = modelo_cargado.predict(ejemplo_prueba)
+                for data in datos["datosY"]:
+                    print("ENTRO")
+                    if data["valor_codificado"] == round(prediccion[0]):
+                            prediccion = data["valor_original"]
+                            break            
+                return f"La predicción es: {prediccion}"
+            else:
+                return "No hay datos para hacer la prediccion"
+        except FileNotFoundError as e:
+            return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}"
