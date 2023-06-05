@@ -11,6 +11,7 @@ class MLearningController:
         self.utils = Utils()
 
     def algoritmos(self, entrenamiento: InfoEntrenamiento):
+        
         entrenamiento.nombre_algoritmo = self.utils.arreglar_nombre(entrenamiento.nombre_algoritmo)
         if entrenamiento.nombre_algoritmo == "KNN":
             return self.utils.prueba(msg="Métricas algormitmo KNN",datos=self.mlearning_service.knn(entrenamiento))
@@ -21,9 +22,9 @@ class MLearningController:
         elif entrenamiento.nombre_algoritmo == "SVM":
             pass
         elif entrenamiento.nombre_algoritmo == "ARBOLDEDECISION":
-            pass
+            return self.utils.prueba(msg="Métricas algormitmo Regresion Logistica",datos=self.mlearning_service.arbol_decision(entrenamiento))
         elif entrenamiento.nombre_algoritmo == "REGRESIONLINEAL":
-            pass
+            return self.utils.prueba(msg="Métricas algormitmo Regresion Logistica",datos=self.mlearning_service.regresion_lineal(entrenamiento))
         else:
             return "Algoritmo no encontrado"
         
