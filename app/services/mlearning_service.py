@@ -174,11 +174,11 @@ class MLearningService:
                         return "error"
                     metricas = self.metricas_hold_out()
                     self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     metricas = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'arbol_decision')
                     self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    return metricas
             else:
                 return "error"
         else:
@@ -198,13 +198,13 @@ class MLearningService:
                     #if self.obtener_matriz_confusion('regresion_lineal') is None:
                         #return "error"
                     metricas = self.metricas_hold_out_regresionLineal()
-                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, None)
+                    return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     modelo = LinearRegression()
                     metricas = self.validacion_cruzada_regresionLineal(modelo, entrenamiento.cantidad)
-                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                    return "ok"
+                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, None)
+                    return metricas
             #else:
                 #return "error"
         #else:
@@ -303,7 +303,10 @@ class MLearningService:
 
     def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas, matriz):
         fecha_actual = datetime.datetime.now().strftime('%d-%m-%Y')
-        info = {'fecha':fecha_actual,'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
+        if matriz is not None:
+            info = {'fecha':fecha_actual,'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
+        else:    
+            info = {'fecha':fecha_actual,'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
         id = self.mongo_service.guardar_json_metricas(info, 'InformacionModelos')
         print("ID ", id)
 
