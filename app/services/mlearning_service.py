@@ -97,13 +97,13 @@ class MLearningService:
                             return "error"
                         metricas =self.metricas_hold_out()
                         self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                        return "ok"
+                        return metricas
                     elif entrenamiento.tecnica == "cross-validation":
                         #print("cantidad", entrenamiento.cantidad)
-                        self.modeloKNN = KNeighborsClassifier()
+                        self.modeloKNN = KNeighborsClassifier(n_neighbors=self.find_best_n_neighbors())
                         metricas = self.validacion_cruzada(self.modeloKNN, entrenamiento.cantidad, 'knn')
                         self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
-                        return "ok"
+                        return metricas
                 else:
                     return "error"
             else:
@@ -135,6 +135,18 @@ class MLearningService:
                     self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
                     return "ok"
         return "ok"
+    
+    def find_best_n_neighbors(self):
+        best_score = 0
+        best_n_neighbors = 0
+        for n_neighbors in range(1, 10):
+            knn = KNeighborsClassifier(n_neighbors=n_neighbors)
+            scores = cross_val_score(knn, self.x, self.y, cv=5)
+            mean_score = scores.mean()
+            if mean_score > best_score:
+                best_score = mean_score
+                best_n_neighbors = n_neighbors
+        return best_n_neighbors
     
     # def mejores_parametros_regresion_log(self):
     #     print("entro a mejores parametros")
@@ -202,7 +214,7 @@ class MLearningService:
         
     def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas):
         info = {'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
-        id = self.mongo_service.guardar_json(info, 'InformacionModelos')
+        id = self.mongo_service.guardar_json_metricas(info, 'InformacionModelos')
         print("ID ", id)
 
     def distribucion_normal(self, dataframe):
@@ -347,6 +359,13 @@ class MLearningService:
         # Obtener la matriz de confusión promedio
         y_pred = cross_val_predict(modelo, self.x, self.y, cv=cv)
         matriz_confusion = confusion_matrix(self.y, y_pred)
+
+        modelo.fit(self.x, self.y)
+
+        # Guardar el modelo entrenado
+        self.guardar_modelo(modelo, 'knn')
+
+        #Guardar modelo
 
         # Visualizar la matriz de confusión
         #plt.figure(figsize=(8, 6))
