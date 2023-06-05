@@ -169,6 +169,7 @@ class MLearningService:
                 if entrenamiento.tecnica == "hold-out":
                     self.particion_dataset(dataframe, entrenamiento.cantidad)
                     modelo.fit(self.XTrain, self.yTrain)
+                    self.guardar_modelo(modelo, 'arbol_decision')
                     self.yPredict = modelo.predict(self.XTest)
                     if self.obtener_matriz_confusion('arbol_decision') is None:
                         return "error"
@@ -194,6 +195,7 @@ class MLearningService:
                     modelo = LinearRegression()
                     self.particion_dataset(dataframe, entrenamiento.cantidad)
                     modelo.fit(self.XTrain, self.yTrain)
+                    self.guardar_modelo(modelo, 'regresion_lineal')
                     self.yPredict = modelo.predict(self.XTest)
                     #if self.obtener_matriz_confusion('regresion_lineal') is None:
                         #return "error"
@@ -509,8 +511,8 @@ class MLearningService:
                         elif pdata == prediccion.mes:
                             prediccion.mes = data[info][i]["valor_codificado"]
             ejemplo_prueba = pd.DataFrame({
-                    'area': [prediccion.area],
-                    'categoria': [prediccion.categoria],
+                    'Area': [prediccion.area],
+                    'Categoria': [prediccion.categoria],
                     'genero': [prediccion.genero],
                     'agrupa': [prediccion.agrupa],
                     'valor': [prediccion.valor],
@@ -529,9 +531,9 @@ class MLearningService:
             elif prediccion.algoritmo == 'REGRESIONLOGISTICA':
                 ruta_modelo += 'reglog.pkl'
             elif prediccion.algoritmo == 'ARBOLDEDECISION':
-                ruta_modelo += 'arboldedicion.pkl'
+                ruta_modelo += 'arbol_decision.pkl'
             elif prediccion.algoritmo == 'REGRESIONLINEAL':
-                ruta_modelo += 'regresionlineal.pkl'
+                ruta_modelo += 'regresion_lineal.pkl'
 
             with open(ruta_modelo, 'rb') as archivo:
                 modelo_cargado = pickle.load(archivo)
@@ -539,7 +541,8 @@ class MLearningService:
             #Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
             prediccion = modelo_cargado.predict(ejemplo_prueba)
             for data in datos["datosY"]:
-                if data["valor_codificado"] == prediccion[0]:
+                print("ENTRO")
+                if data["valor_codificado"] == round(prediccion[0]):
                         prediccion = data["valor_original"]
                         break            
             return f"La predicción es: {prediccion}"
