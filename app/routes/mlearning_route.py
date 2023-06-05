@@ -98,6 +98,14 @@ async def entrenamiento_algoritmo(entrenamiento: InfoEntrenamiento= Body(..., ex
    print(entrenamiento)
    return mlearning_controller.algoritmos(entrenamiento)
 
+@todo_api_router.get("/matriz-confusion-algoritmo={nombre_algoritmo}", description="Permite obtener la matriz de confusión de un algoritmo en específico, se debe enviar el nombre del algoritmo como parámetro")
+async def matriz_confusional(nombre_algoritmo: str):
+    img_path = await processing_controller.obtener_matriz_confusion(nombre_algoritmo)
+    if isinstance(img_path, str):
+        return FileResponse(img_path)
+    else:
+       return img_path
+
 @todo_api_router.post("/prediccion", description="Predicción de algoritmo \n  nombre_algoritmo: nombre del algoritmo a utilizar, columnas_x: variables a usar para x, objetivo_y: columna objetivo, tecnica: hold-out o cross-validation, cantidad: % partición dataset o número de folds para cv, normalizacion: min-max o standarscaler")
 async def prediccion_algoritmo(prediccion: PrediccionModel= Body(..., example={
             'algoritmo': 'knn',
