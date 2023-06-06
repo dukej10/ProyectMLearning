@@ -34,7 +34,7 @@ class ProcessingService:
 
                # Verifica si hay valores nulos en el DataFrame
                columnas_con_nulos = df.columns[df.isnull().any()].tolist()
-               print(columnas_con_nulos)
+               #print(columnas_con_nulos)
                if len(columnas_con_nulos) > 0:
                     # Elimina las columnas con valores nulos
                     df = df.dropna(subset=columnas_con_nulos)
@@ -97,7 +97,7 @@ class ProcessingService:
         try:
             datos = self.mongo_service.obtener_ultimo_registro("Dataset")
             if datos:
-                print(datos["titulos"])
+                #print(datos["titulos"])
                 titulos = datos["titulos"]
                 return titulos
         except Exception as e:
@@ -207,12 +207,12 @@ class ProcessingService:
             # Obtener la lista de archivos que coinciden con el nombre proporcionado
             archivos = glob.glob(f"app/files/imgs/modelos/matrices_correlacion/{nombre}*.png")
             aux = []
-            print("ARCHIVOS ", archivos)
+            #print("ARCHIVOS ", archivos)
             for archivo in archivos:
                 archivo = archivo.replace('\\', '/')
                 aux.append(archivo)
             archivos = aux
-            print("ARCHIVOS ", archivos)
+            #print("ARCHIVOS ", archivos)
             # Ordenar la lista de archivos por fecha de modificación descendente
             archivos.sort(key=os.path.getmtime, reverse=True)
 
