@@ -281,18 +281,24 @@ class MLearningService:
                 # Filtrar los títulos y valores según las columnas especificadas
                 titulos_seleccionados = {c  for c in union if c in titulos}
                 valores_seleccionados = []
+                valorAux = {}
                 for elemento in valores:
-                    valores_seleccionados.append({c: elemento[c] for c in union if c in elemento})
+                    for c in elemento:
+                        if c in titulos_seleccionados:
+                            valorAux[c] = elemento[c]
+                    valores_seleccionados.append(valorAux)
+                    valorAux = {}
                 #print("TITULOS SELECCIONADOS ", titulos_seleccionados)
                 #print("VALORES SELECCIONADOS ", valores_seleccionados)
                 df = pd.DataFrame(valores_seleccionados, columns=list(titulos_seleccionados))
+                #print("DATAFRAME ", df)
                 #print(df)
                 print("DISTRIBUCION NORMAL")
                 self.distribucion_normal(df)
                 #print(df)
                 print("-------------------------------------------")
                 #print("CODIFICAR")
-                df = self.dataframe_service.codificar_valores_cat(df, entrenamiento.objetivo_y)
+                df = self.dataframe_service.codificar_valores_cat(df, entrenamiento)
                 print("NORMALIZAR")
                 dataNumerica = self.dataframe_service.normalizar_informacion(dataframe=df, tipo=entrenamiento.normalizacion, objetivo_y= entrenamiento.objetivo_y)
                 #print(df)

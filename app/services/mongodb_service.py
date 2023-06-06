@@ -10,13 +10,35 @@ class MongoDBService:
 
     def guardar_json(self, datos_json, coleccion):
         try:
+            print("COLLECTION ", coleccion)
             self.collection = self.db[coleccion]
+            
+            existe_registro = None  # Inicializar la variable antes de la verificación
+            
+            if coleccion == 'RepresentacionCodificacion':
+                existe_registro = self.collection.find_one({
+                    "nombre_algoritmo": datos_json['nombre_algoritmo'],
+                })
+            elif coleccion == 'Dataset':
+                existe_registro = self.collection.find_one({
+                    "nombreDoc": datos_json['nombreDoc'],
+                    "version": datos_json['version']
+                })
+            
+            if existe_registro:
+               if coleccion == 'RepresentacionCodificacion':
+                    self.collection.delete_one({"nombre_algoritmo": datos_json['nombre_algoritmo']})
+               elif coleccion == 'Dataset':
+                    self.collection.delete_one({"nombreDoc": datos_json['nombreDoc'], "version": datos_json['version']})
+            
             result = self.collection.insert_one(datos_json)
             print(f'JSON guardado en MongoDB : {str(result)}')
             return result.inserted_id
+            
         except Exception as e:
             print(f'Error al guardar el JSON en MongoDB: {str(e)}')
             return None
+
         
     def guardar_json_metricas(self, datos_json, coleccion):
         try:
