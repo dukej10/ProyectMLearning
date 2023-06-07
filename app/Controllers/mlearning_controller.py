@@ -15,12 +15,16 @@ class MLearningController:
         entrenamiento.nombre_algoritmo = self.utils.arreglar_nombre(entrenamiento.nombre_algoritmo)
         if entrenamiento.nombre_algoritmo == "KNN":
             return self.utils.prueba(msg="Métricas algormitmo KNN",datos=self.mlearning_service.knn(entrenamiento))
+        
+
         elif entrenamiento.nombre_algoritmo == "NAIVEBAYES":
-            pass
+            return self.utils.prueba(msg="Métricas algoritmo de Naive Bayes ", datos = self.mlearning_service.naive_bayes(entrenamiento))
+        
         elif entrenamiento.nombre_algoritmo == "REGRESIONLOGISTICA":
             return self.utils.prueba(msg="Métricas algormitmo Regresion Logistica",datos=self.mlearning_service.regresion_logistica(entrenamiento))
         elif entrenamiento.nombre_algoritmo == "SVM":
-            pass
+            return self.utils.prueba(msg="Métricas algoritmo de Maquinas de soporte vectorial SVM ", datos = self.mlearning_service.svm(entrenamiento))
+        
         elif entrenamiento.nombre_algoritmo == "ARBOLDEDECISION":
             return self.utils.prueba(msg="Métricas algormitmo Regresion Árbol de decisión",datos=self.mlearning_service.arbol_decision(entrenamiento))
         elif entrenamiento.nombre_algoritmo == "REGRESIONLINEAL":
