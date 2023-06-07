@@ -381,7 +381,7 @@ class MLearningService:
             # Asegurarse de que self.yPredictKNN sea una matriz numpy
             y_pred = np.array(self.yPredict)
             matrizKNN = confusion_matrix(y_test, y_pred)
-            print(matrizKNN)
+            #print(matrizKNN)
             sb.heatmap(matrizKNN, annot=True, cmap="Blues")
             plt.title(f"Matriz de Confusión {nombre_modelo} - Hold-Out")
             ruta_guardado = "app/files/imgs/modelos/matrices_correlacion/"
@@ -501,65 +501,90 @@ class MLearningService:
         
     def prediccion(self, prediccion: PrediccionModel):
         try:
-            datos = self.mongo_service.obtener_ultimo_registro('RepresentacionCodificacion')
-            prediccion.area = self.utils.arreglar_nombre(prediccion.area)
-            prediccion.categoria = self.utils.arreglar_nombre(prediccion.categoria)
-            prediccion.agrupa = self.utils.arreglar_nombre(prediccion.agrupa)
-            prediccion.genero = self.utils.arreglar_nombre(prediccion.genero)
-            prediccion.mes = self.utils.arreglar_nombre(prediccion.mes)
+            datos = self.mongo_service.obtener_datos_algoritmo('RepresentacionCodificacion', prediccion.algoritmo)
+            
+            
+            #print(columns_predecir)
+            # Verificar si el diccionario solo contiene las claves presentes en la lista
             if datos:
-                for data in datos["datosX"]:
-                    # print(data['mes'])
-                    for info in data:
-                        for i in range(0, len(data[info])):
-                            pdata = self.utils.arreglar_nombre(data[info][i]['valor_original'])
-                            if pdata == prediccion.area:
-                                prediccion.area = data[info][i]["valor_codificado"]
-                            elif pdata == prediccion.categoria:
-                                prediccion.categoria = data[info][i]["valor_codificado"]
-                            elif pdata == prediccion.agrupa:
-                                prediccion.agrupa = data[info][i]["valor_codificado"]
-                            elif pdata == prediccion.genero:
-                                prediccion.genero = data[info][i]["valor_codificado"]
-                            elif pdata == prediccion.mes:
-                                prediccion.mes = data[info][i]["valor_codificado"]
-                ejemplo_prueba = pd.DataFrame({
-                        'Area': [prediccion.area],
-                        'Categoria': [prediccion.categoria],
-                        'genero': [prediccion.genero],
-                        'agrupa': [prediccion.agrupa],
-                        'valor': [prediccion.valor],
-                        'año': [prediccion.año],
-                        'mes': [prediccion.mes]
-                    })
-                # Cargar el modelo desde el archivo
-                ruta_modelo = 'app/files/modelos/'
-                prediccion.algoritmo = self.utils.arreglar_nombre(prediccion.algoritmo)
-                if prediccion.algoritmo == 'KNN':
-                    ruta_modelo += 'knn.pkl'
-                elif prediccion.algoritmo == 'SVM':
-                    ruta_modelo += 'svm.pkl'
-                elif prediccion.algoritmo == 'NAIVEBAYES':
-                    ruta_modelo += 'naivebayes.pkl'
-                elif prediccion.algoritmo == 'REGRESIONLOGISTICA':
-                    ruta_modelo += 'reglog.pkl'
-                elif prediccion.algoritmo == 'ARBOLDEDECISION':
-                    ruta_modelo += 'arbol_decision.pkl'
-                elif prediccion.algoritmo == 'REGRESIONLINEAL':
-                    ruta_modelo += 'regresion_lineal.pkl'
-
-                with open(ruta_modelo, 'rb') as archivo:
-                    modelo_cargado = pickle.load(archivo)
+                columns_x = [valor.lower() for valor in datos['x']]
+                columns_predecir = [valor.lower() for valor in prediccion.valores_predecir.keys()]
+                clavesReemplazadas = []
+                # Validar que la información para predecir corresponda con los campos con los que se entrenó el modelo
+                cant = 0
+                for clave in columns_predecir:
+                    if clave in columns_x:
+                        cant = cant + 1
+                if cant == len(columns_x):
+                    # Se codifican los valores recibidos para que coincidan con los valores con los que se entrenó el modelo
+                    prediccion = self.__codificar_valores_recibidos(datos, columns_x, prediccion, clavesReemplazadas)
+                    # Cargar el modelo desde el archivo
+                    ruta_modelo = 'app/files/modelos/'
+                    modelo = self.__obtener_modelo(ruta_modelo, prediccion.algoritmo)
+                    #print("encontro modelo")
+                    #print(prediccion.valores_predecir)
+                    # Crear un dataframe con los datos codificados
+                    ejemplo_prueba = pd.DataFrame(prediccion.valores_predecir, index=[0])
+                    if modelo:
+                    #Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
+                        prediccion = modelo.predict(ejemplo_prueba)
+                        for data in datos["datosY"]:
+                            #print("ENTRO")
+                            if data["valor_codificado"] == round(prediccion[0]):
+                                    prediccion = data["valor_original"]
+                                    break            
+                        return f"La predicción es: {prediccion}"
+                    else:
+                        return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}"
+                    
+                else:
+                    return f"Los valores a predecir debe tener las columnas que se especificaron como x para entrenar el algoritmo {datos['x']}"
                 
-                #Realizar predicción utilizando el modelo cargado y el ejemplo de prueba
-                prediccion = modelo_cargado.predict(ejemplo_prueba)
-                for data in datos["datosY"]:
-                    print("ENTRO")
-                    if data["valor_codificado"] == round(prediccion[0]):
-                            prediccion = data["valor_original"]
-                            break            
-                return f"La predicción es: {prediccion}"
+
             else:
-                return "No hay datos para hacer la prediccion"
+                return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}"
         except FileNotFoundError as e:
             return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}"
+    
+    def __codificar_valores_recibidos(self, datos, columns_x, prediccion, clavesReemplazadas):
+        ya = False
+        for clave in columns_x:
+                        for claveO in datos['x']:
+                            for valor in datos["datosX"]:
+                                for claveP in prediccion.valores_predecir.keys():
+                                    if claveP not in clavesReemplazadas and not isinstance(prediccion.valores_predecir[claveP], (int, float, complex)):
+                                        if self.utils.arreglar_nombre(clave) == self.utils.arreglar_nombre(claveO):
+                                            for i in valor:
+                                                #pdata = self.utils.arreglar_nombre(data[info][i]['valor_original'])
+                                                # print(claveO)
+                                                # print(clave)
+                                                for j in valor[i]:
+                                                    # print(j)
+                                                    if not isinstance(j['valor_original'], (int, float, complex)):
+                                                        if self.utils.arreglar_nombre(j['valor_original']) == self.utils.arreglar_nombre(prediccion.valores_predecir[claveP]):
+                                                            clavesReemplazadas.append(claveP)
+                                                            prediccion.valores_predecir[claveP] = j['valor_codificado']
+                                                            ya = True
+                                                            break
+                                                if ya:
+                                                    break
+        return prediccion
+    
+    def __obtener_modelo(self, ruta_modelo, nombre_algoritmo):
+            nombre_algoritmo = self.utils.arreglar_nombre(nombre_algoritmo)
+            if nombre_algoritmo == 'KNN':
+                ruta_modelo += 'knn.pkl'
+            elif nombre_algoritmo == 'SVM':
+                ruta_modelo += 'svm.pkl'
+            elif nombre_algoritmo == 'NAIVEBAYES':
+                ruta_modelo += 'naivebayes.pkl'
+            elif nombre_algoritmo == 'REGRESIONLOGISTICA':
+                ruta_modelo += 'reglog.pkl'
+            elif nombre_algoritmo == 'ARBOLDEDECISION':
+                ruta_modelo += 'arbol_decision.pkl'
+            elif nombre_algoritmo == 'REGRESIONLINEAL':
+                ruta_modelo += 'regresion_lineal.pkl'
+
+            with open(ruta_modelo, 'rb') as archivo:
+                modelo_cargado = pickle.load(archivo)
+            return modelo_cargado

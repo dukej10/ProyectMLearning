@@ -95,12 +95,14 @@ async def metricas_algoritmos_entrenados():
 @todo_api_router.post("/prediccion", description="Predicción de algoritmo \n  nombre_algoritmo: nombre del algoritmo a utilizar, columnas_x: variables a usar para x, objetivo_y: columna objetivo, tecnica: hold-out o cross-validation, cantidad: % partición dataset o número de folds para cv, normalizacion: min-max o standarscaler")
 async def prediccion_algoritmo(prediccion: PrediccionModel= Body(..., example={
             'algoritmo': 'knn',
-            'area': 'Manizales',
-            'categoria': 'arma blanca / cortopunzante',
-            'genero': 1,
-            'agrupa': 'adultos',
-            'valor': 20000,
-            'año': 2015,
-            'mes': 'Enero'
+            'valores_predecir': {
+                "Area": "Manizales",
+                "Categoria": "arma blanca / cortopunzante",
+                "genero": "masculino",
+                "agrupa": "adultos",
+                "valor": 20000,
+                "año": 2015,
+                "mes": "Enero"
+                }
         })):
     return mlearning_controller.prediccion(prediccion)
