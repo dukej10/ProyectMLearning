@@ -86,6 +86,19 @@ class MongoDBService:
             print(f'Error al obtener el ultimo registro: {str(e)}')
             return None
         
+    def obtener_datos_algoritmo(self, coleccion, nombre_algoritmo):
+        try:
+            self.collection = self.db[coleccion]
+            result = self.collection.find_one({
+                "nombre_algoritmo": nombre_algoritmo.upper()
+            })
+            if result:
+                return result
+            return None
+        except Exception as e:
+            print(f'Error al obtener el ultimo registro: {str(e)}')
+            return None
+        
     def obtener_fecha_mas_reciente(self, coleccion):
         try:
             self.collection = self.db[coleccion]
