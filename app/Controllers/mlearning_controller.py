@@ -30,4 +30,7 @@ class MLearningController:
         
     def prediccion(self, prediccion: PrediccionModel):
         return self.mlearning_service.prediccion(prediccion)
+    
+    def obtener_mejores_algoritmos(self):
+        return self.mlearning_service.obtener_top3_algoritmos()
    
