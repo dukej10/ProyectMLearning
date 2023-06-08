@@ -588,3 +588,20 @@ class MLearningService:
             with open(ruta_modelo, 'rb') as archivo:
                 modelo_cargado = pickle.load(archivo)
             return modelo_cargado
+
+    def obtener_top3_algoritmos(self):
+        metricas= self.mongo_service.obtener_mejores_algoritmos('InformacionModelos')
+        datos = []
+        if metricas:
+            if len(metricas) > 0:
+                # Ordenar la lista en función de la precisión en orden descendente
+                dic_ordenado = sorted(metricas, key=lambda x: x['metricas'].get('accuracy', -1), reverse=True)
+
+                # Obtener los tres primeros elementos
+                mejores_tres = dic_ordenado[:3]
+                for  data in mejores_tres:
+                        datos.append({'nombre_algoritmo': data['nombre_algoritmo'], 'normalizacion': data['normalizacion'], 'tecnica': data['tecnica'], 'metricas': data['metricas']})
+                        #print(datos)
+                return self.utils.prueba(msg="Top 3 mejores algoritmos entrenados", datos=datos)
+       
+            return self.utils.error(msg="No se encontraron métricas")

@@ -106,3 +106,8 @@ async def prediccion_algoritmo(prediccion: PrediccionModel= Body(..., example={
                 }
         })):
     return mlearning_controller.prediccion(prediccion)
+
+@todo_api_router.get("/top3-algoritmos", description="Permite obtener los 3 mejores algoritmos entrenados")
+async def top3_algoritmos():
+    return mlearning_controller.obtener_mejores_algoritmos()
+    

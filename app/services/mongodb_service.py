@@ -48,28 +48,24 @@ class MongoDBService:
             existe_registro = self.collection.find_one({
                 "nombre_algoritmo": datos_json['nombre_algoritmo'],
                 "normalizacion": datos_json['normalizacion'],
-                "tecnica": datos_json['tecnica']
+                "tecnica": datos_json['tecnica'],
+                "fecha": datos_json['fecha']
             })
             
             if existe_registro:
                 # Actualizar los datos del registro existente
-                result = self.collection.update_one(
-                    {
+                self.collection.delete_one({
                         "nombre_algoritmo": datos_json['nombre_algoritmo'],
                         "normalizacion": datos_json['normalizacion'],
                         "tecnica": datos_json['tecnica'],
                         "fecha": datos_json['fecha']
 
-                    },
-                    {"$set": datos_json}
-                )
-                print(f'Datos actualizados en MongoDB: {str(result)}')
-                return result.upserted_id
-            else:
+                    })
+
                 # Insertar un nuevo registro
-                result = self.collection.insert_one(datos_json)
-                print(f'JSON guardado en MongoDB: {str(result)}')
-                return result.inserted_id
+            result = self.collection.insert_one(datos_json)
+            print(f'JSON guardado en MongoDB: {str(result)}')
+            return result.inserted_id
         except Exception as e:
             print(f'Error al guardar o actualizar el JSON en MongoDB: {str(e)}')
             return None
@@ -129,5 +125,13 @@ class MongoDBService:
         except Exception as e:
             print(f'Error al obtener los registros de la fecha más reciente: {str(e)}')
             return None
-
+        
+    def obtener_mejores_algoritmos(self, coleccion):
+        try:
+            registros= self.obtener_registros_metricas_recientes(coleccion)
+            print(f'Registros: {registros}')
+            return registros 
+        except Exception as e:
+            print(f'Error al obtener los mejores algoritmos: {str(e)}')
+            return None
     
