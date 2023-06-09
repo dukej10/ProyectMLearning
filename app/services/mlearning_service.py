@@ -589,7 +589,7 @@ class MLearningService:
                 for clave in columns_predecir:
                     if clave in columns_x:
                         cant = cant + 1
-                if cant == len(columns_x):
+                if cant == len(columns_x) and len(columns_x) == len(columns_predecir):
                     # Se codifican los valores recibidos para que coincidan con los valores con los que se entrenó el modelo
                     prediccion = self.__codificar_valores_recibidos(datos, columns_x, prediccion, clavesReemplazadas)
                     # Cargar el modelo desde el archivo
