@@ -31,9 +31,19 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import cross_val_score
 
+
+#Naive Bayes
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectKBest, f_classif
+
+
 #Normalizar datos
 from sklearn.preprocessing import MinMaxScaler
 from app.models.entrenamiento_model import InfoEntrenamiento
+
 
 
 class MLearningService:
@@ -149,6 +159,35 @@ class MLearningService:
                     return metricas
         return "ok"
     
+    
+    def naive_bayes(self, entrenamiento: InfoEntrenamiento):
+        validaciones = self.validaciones(entrenamiento)
+        if validaciones is True:
+            dataframe = self.preparacion_dataframe(entrenamiento)
+            if dataframe is not None:
+                self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
+                if entrenamiento.tecnica == "hold-out":
+                    self.particion_dataset(dataframe, entrenamiento.cantidad)
+                    modelo = GaussianNB()
+                    modelo.fit(self.XTrain, self.yTrain)
+                    self.guardar_modelo(modelo, 'naive_bayes')
+                    self.yPredict = modelo.predict(self.XTest)
+                    matriz = self.obtener_matriz_confusion('naive_bayes')
+                    if matriz is None:
+                        return "error"
+                    metricas = self.metricas_hold_out()
+                    self.guardar_info_modelos('naive_bayes', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    return metricas
+                elif entrenamiento.tecnica == "cross-validation":
+                    modelo = GaussianNB()
+                    metricas, matriz = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'naive_bayes')
+                    self.guardar_info_modelos('naive_bayes', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    return metricas
+            else:
+                return "error"
+        else:
+            return validaciones
+
     def find_best_n_neighbors(self):
         param_grid = {'n_neighbors': [1, 3, 5, 7, 9, 11, 13, 15, 17]}
         knn = KNeighborsClassifier()
@@ -314,6 +353,41 @@ class MLearningService:
         except Exception as e:
             print("Error en la preparación del dataframe: ", e)
             return  None
+
+
+    def svm(self, entrenamiento: InfoEntrenamiento):
+        validaciones = self.validaciones(entrenamiento)
+        if validaciones is True:
+            dataframe = self.preparacion_dataframe(entrenamiento)
+            if dataframe is not None:
+                self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
+                if entrenamiento.tecnica == "hold-out":
+                    self.particion_dataset(dataframe, entrenamiento.cantidad)
+                    scaler = StandardScaler()
+                    self.XTrain = scaler.fit_transform(self.XTrain)
+                    self.XTest = scaler.transform(self.XTest)
+                    modelo = SVC(C=1.0, kernel='rbf', gamma='scale')
+                    modelo.fit(self.XTrain, self.yTrain)
+                    self.guardar_modelo(modelo, 'svm')
+                    self.yPredict = modelo.predict(self.XTest)
+                    matriz = self.obtener_matriz_confusion('svm')
+                    if matriz is None:
+                        return "error"
+                    metricas = self.metricas_hold_out()
+                    self.guardar_info_modelos('svm', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    return metricas
+                elif entrenamiento.tecnica == "cross-validation":
+                    scaler = StandardScaler()
+                    self.XTrain = scaler.fit_transform(self.XTrain)
+                    modelo = SVC(C=1.0, kernel='rbf', gamma='scale')
+                    metricas, matriz = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'svm')
+                    self.guardar_info_modelos('svm', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    return metricas
+            else:
+                return "error"
+        else:
+            return validaciones
+
 
     def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas, matriz):
         fecha_actual = datetime.datetime.now().strftime('%d-%m-%Y')

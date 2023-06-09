@@ -5,6 +5,7 @@ __pycache__/
 env
 .env
 .pytest_cache
-proyectoIA
-.proyectoIA/
-proyectoIA/
+proyectovenv
+.proyectovenv
+.proyectovenv/
+proyectovenv/
