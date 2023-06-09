@@ -10,7 +10,7 @@ class MongoDBService:
 
     def guardar_json(self, datos_json, coleccion):
         try:
-            print("COLLECTION ", coleccion)
+            # print("COLLECTION ", coleccion)
             self.collection = self.db[coleccion]
             
             existe_registro = None  # Inicializar la variable antes de la verificación
@@ -129,7 +129,7 @@ class MongoDBService:
     def obtener_mejores_algoritmos(self, coleccion):
         try:
             registros= self.obtener_registros_metricas_recientes(coleccion)
-            print(f'Registros: {registros}')
+            #print(f'Registros: {registros}')
             return registros 
         except Exception as e:
             print(f'Error al obtener los mejores algoritmos: {str(e)}')
