@@ -12,7 +12,9 @@ from fastapi.responses import FileResponse
 
 from app.services.mongodb_service import MongoDBService
 
-
+'''
+clase que define los servicios de las funcionalidades generales que usa la api para entrenar y predecir datos
+'''
 class ProcessingService:
 
     def __init__(self):
@@ -20,6 +22,11 @@ class ProcessingService:
         self.file_service = FileService()
         self.utils = Utils()
 
+    '''
+    Este método obtiene el último registro de un conjunto de datos desde MongoDB y el último archivo de la carpeta "sets". 
+    Luego, crea un DataFrame a partir de los datos obtenidos y verifica si hay valores nulos en el DataFrame. 
+    Si encuentra valores nulos, elimina las columnas correspondientes y guarda una copia del DataFrame modificado en un archivo Excel.
+    '''
     def descarte_datos(self):
         try:
             datos = self.mongo_service.obtener_ultimo_registro("Dataset") 
@@ -55,7 +62,11 @@ class ProcessingService:
         except Exception as e:
             print(f'Error al tratar los datos: {str(e)}')
             return None
-       
+    '''
+     Este método obtiene el último archivo de la carpeta "sets" y el último registro de un conjunto de datos desde MongoDB. 
+     A continuación, crea un DataFrame a partir de los datos obtenidos y realiza la imputación de valores nulos en las 
+     columnas correspondientes. Si se realizan cambios debido a la imputación, guarda una copia del DataFrame modificado en un archivo Excel.
+    '''  
     def imputacion_datos(self):
         try:
             ruta_archivo = self.file_service.obtener_ultimo_archivo("sets")
@@ -92,7 +103,9 @@ class ProcessingService:
         except Exception as e:
             print(f'Error al tratar los datos: {str(e)}')
             return None
-        
+    '''
+    Este método obtiene el último registro de un conjunto de datos desde MongoDB y devuelve los títulos de las columnas disponibles.
+    '''   
     def columnas_disponibles_dataset(self):
         try:
             datos = self.mongo_service.obtener_ultimo_registro("Dataset")
@@ -103,7 +116,10 @@ class ProcessingService:
         except Exception as e:
             print(f'Error al obtener los datos: {str(e)}')
             return None
-
+    '''
+    Este método obtiene el último registro de un conjunto de datos desde MongoDB y crea un DataFrame a partir de los datos obtenidos. 
+    Luego, clasifica las columnas del DataFrame en tres categorías: numérico, texto y booleano, y devuelve un diccionario con las columnas clasificadas.
+    '''
     def obtener_tipo_datos(self):
         
         try:
@@ -133,7 +149,11 @@ class ProcessingService:
         except Exception as e:
             print(f'Error al obtener el registro: {str(e)}')
             return None
-
+    '''
+    Este método obtiene el último registro de un conjunto de datos desde MongoDB y crea un DataFrame a partir de los datos obtenidos.
+    Luego, genera un histograma y una matriz de correlación para las columnas numéricas del DataFrame.
+    Guarda las imágenes generadas en las carpetas correspondientes y devuelve las ubicaciones de las imágenes.
+    '''
     def generar_img_analisis(self):
         try:
             # Lee el archivo Excel o utiliza tu DataFrame existente
@@ -160,7 +180,9 @@ class ProcessingService:
         except Exception as e:
             return f'Error buscar el registro: {str(e)}'
 
-
+    '''
+    Estos son métodos privados utilizados por el método "generar_img_analisis" para generar el histograma y la matriz de correlación, respectivamente.
+    '''
     def _generate_histograma(self, columnas_numericas):
          # Configurar el tamaño y el estilo de la figura
                 plt.rcParams['figure.figsize'] = (16, 9)
@@ -179,7 +201,9 @@ class ProcessingService:
         filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + 'matriz_correlacion.png'
         plt.savefig('app/files/imgs/matriz_correlacion/' + filename)
         plt.close()
-
+    '''
+    Este es un método privado utilizado para obtener la ubicación de una imagen en función de la ubicación proporcionada.
+    '''
     def _obtener_imagen(self, ubicacion):
         try: 
             # print("IMAGEN")
@@ -197,7 +221,10 @@ class ProcessingService:
                 return None
         except FileNotFoundError as e:
             return f'No se encontró la imagen {str(e)}', 404
-        
+   
+    '''
+     Este método recibe el nombre de un algoritmo y busca la última matriz de confusión generada para ese algoritmo. Devuelve la ubicación de la última imagen generada.
+    '''
     def obtener_ultima_matriz_confusion_algoritmo(self,nombre:str):
         try:
             if nombre.upper().replace(" ", "") == 'REGRESIONLOGISTICA':
@@ -225,6 +252,9 @@ class ProcessingService:
         except FileNotFoundError as e:
                 return {'mensaje':f"Error al obtener la matriz de confusion del algoritmo {nombre}."}, 500
     
+    '''
+    Estos métodos obtienen la ubicación de la imagen de la matriz de correlación y el histograma, respectivamente.
+    '''
     def obtener_imagen_matriz(self):
         try:
             img = self._obtener_imagen("imgs/matriz_correlacion")
@@ -244,7 +274,11 @@ class ProcessingService:
             return img
         except FileNotFoundError as e:
             return {'mensaje':f'Error al obtener la imagen del histograma: {str(e)}'}, 404
-        
+    
+    '''
+    Este método obtiene las métricas de los modelos de algoritmos más recientes almacenados en MongoDB. 
+    Devuelve una lista de diccionarios que contienen el nombre del algoritmo, la normalización, la técnica utilizada y las métricas.
+    '''
     def obtener_metricas_algoritmos(self):
             metricas =self.mongo_service.obtener_registros_metricas_recientes('InformacionModelos')
             datos = []

@@ -9,12 +9,19 @@ from app.models.entrenamiento_model import InfoEntrenamiento
 
 from app.services.mongodb_service import MongoDBService
 
-
+'''
+clase que aporta la funcionalidad para normalizar y codificar los datos del Dataframe
+'''
 
 class DataframeService:
 
     def __init__(self):
          self.mongo_service = MongoDBService()
+
+    '''
+    metodo que Codifica los valores categóricos en el dataframe utilizando LabelEncoder. Almacena los valores originales y codificados en listas separadas 
+    (listY y listX). Luego, guarda esta información en un objeto JSON utilizando el servicio de MongoDB si listY contiene elementos.
+    '''  
 
     def codificar_valores_cat(self, dataframe, entrenamiento: InfoEntrenamiento):
         encoder=LabelEncoder()
@@ -69,6 +76,11 @@ class DataframeService:
              id = self.mongo_service.guardar_json({"nombre_algoritmo":entrenamiento.nombre_algoritmo, "datosY":listY, "datosX":listX,'x':entrenamiento.columnas_x, 'y':entrenamiento.objetivo_y  }, "RepresentacionCodificacion")
         return dataframe
     
+    '''
+    Selecciona las columnas numéricas del dataframe y aplica una técnica de normalización según el tipo especificado 
+      Devuelve el dataframe con los datos numéricos normalizados.
+    '''
+
     def  normalizar_informacion(self, dataframe, tipo, objetivo_y):
          #print("dataframe")
          dataNumerica = dataframe.select_dtypes(np.number)
@@ -87,7 +99,9 @@ class DataframeService:
           #print(dataNumerica)
           return dataNumerica
          
-    
+    '''
+    Redondea los valores numéricos en el dataframe a enteros y devuelve el dataframe resultante.
+    '''
     def redondear_datos(self, dataNumerica):
          #print(dataNumerica)
          dataNumerica = dataNumerica.astype(int)
@@ -95,6 +109,10 @@ class DataframeService:
          #print(dataNumerica)
          return dataNumerica
     
+    '''
+    Concatena los datos numéricos (almacenados en dataNumerica) con la columna objetivo objetivo_y del dataframe original (dataframe).
+      Devuelve el dataframe final que contiene tanto los datos numéricos como la columna objetivo.
+    '''
     def concatenar_datos(self, dataNumerica, dataframe, objetivo_y):
         print("dATA")
         #print(dataNumerica.info())

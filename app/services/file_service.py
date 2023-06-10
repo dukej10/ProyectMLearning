@@ -7,6 +7,10 @@ from fastapi.responses import FileResponse
 from app.services.mongodb_service import MongoDBService
 from app.utils.utils import Utils
 
+'''
+clase que define los servicios para el manejo de archivos
+'''
+
 class FileService:
 
 
@@ -17,6 +21,11 @@ class FileService:
     def welcome(self):
         return 'Bienvenido a la API de ML.'
 
+
+    '''
+    Guarda un archivo en la ubicación especificada. Genera un nombre único para el archivo basado en la fecha y hora actual. 
+    Escribe los datos del archivo en el disco y guarda la información del archivo en un objeto JSON utilizando el servicio de MongoDB.
+    '''
     async def guardar_archivo(self, file, version, ubicacion):
         try:
             filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + file.filename
@@ -30,6 +39,10 @@ class FileService:
         except FileNotFoundError as e:
             return f'Error al guardar el archivo: {str(e)}'
         
+
+    '''
+     Obtiene los nombres de los archivos presentes en una carpeta específica. Devuelve una lista de los nombres de los archivos encontrados.
+     '''   
     def obtener_nombres_archivos(self):
         ruta_carpeta = os.path.join('app', 'files')
         nombres_archivos = []
@@ -44,6 +57,9 @@ class FileService:
             print(f'Error al obtener los nombres de los archivos: {str(e)}')
             return []
         
+    '''
+    Obtiene la ruta del archivo más reciente en la ubicación especificada. Filtra los archivos según su extensión (.xlsx, .csv, .png, .jpg) y devuelve la ruta del archivo más reciente.
+    '''
     def obtener_ultimo_archivo(self, ubicacion):
         try: 
             ruta_carpeta = os.path.join('app','files', ubicacion)
@@ -62,6 +78,10 @@ class FileService:
             print(f'Error al obtener el ultimo archivo: {str(e)}')
             return None
 
+    '''
+    Convierte el archivo más reciente en la ubicación especificada (excel o csv) a un objeto JSON. Lee los datos del archivo utilizando pandas 
+    y los convierte en un diccionario JSON con los títulos de las columnas y los valores de cada fila.
+    '''
     def convertir_archivo_a_json(self, version, filename, ubicacion):
         try:
             ultimo_archivo = self.obtener_ultimo_archivo(ubicacion)
@@ -86,6 +106,9 @@ class FileService:
             print(f'Error al convertir el archivo Excel a JSON: {str(e)}')
             return None
         
+    '''
+    Convierte el archivo más reciente en la ubicación especificada a un objeto JSON y lo guarda en una colección específica de MongoDB utilizando el servicio de MongoDB.
+    '''
     def guardar_archivo_json(self, version, filename, ubicacion, coleccion):
         try:
             json = self.convertir_archivo_a_json(version, filename, ubicacion)
@@ -101,7 +124,10 @@ class FileService:
             print(f'Error al guardar el archivo JSON: {str(e)}')
 
     
-
+    '''
+    Realiza una copia de un DataFrame modificado en un archivo Excel. Guarda el DataFrame en un archivo Excel en la carpeta 
+    "cleanData" con un nombre que incluye la acción realizada (por ejemplo, 'accion_nombre_archivo.xlsx').
+    '''
     def _copia_excel(self, df, nombre_archivo, accion):
         try:
             ruta_archivo = './app/files/cleanData/'+accion+os.path.basename(nombre_archivo)

@@ -1,3 +1,7 @@
+'''
+clase para serializar parametros entre el modelo y los controladores
+'''
+
 def todo_serializer(todo) -> dict:
     return {
         "id": str(todo["_id"]),

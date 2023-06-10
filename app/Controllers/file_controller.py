@@ -3,12 +3,17 @@ from flask import jsonify, request
 from datetime import datetime
 from app.utils.utils import Utils
 
+'''
+clase para controlar conexiones de servicios para manejo de archivos 
+'''
+
 class FileController:
     
     def __init__(self):
        self.file_service = FileService()
        self.utils = Utils()
 
+#metodo asincrono para cargar el archivo desde el explorador
 
     async def upload_file(self, file):
         if not file:
@@ -23,7 +28,7 @@ class FileController:
         except Exception as e:
                 return self.utils.prueba(msg=f'Error al guardar el archivo: {str(e)}'), 500
             
-
+#metodo para devolver el nombre de los archivos 
     def get_all_names_files(self):
         try:
             return (self.utils.prueba(msg='Lista de nombres de archivos', datos= self.file_service.obtener_nombres_archivos())), 200
