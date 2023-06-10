@@ -3,12 +3,17 @@ from app.models.prediccion_model import PrediccionModel
 from app.services.mlearning_service import MLearningService
 from app.utils.utils import Utils
 
-
+'''
+esta clase tiene los llamados a los diferentes metodos que ofrece el servicio de mlearning 
+'''
 class MLearningController:
 
     def __init__(self):
         self.mlearning_service = MLearningService()
         self.utils = Utils()
+
+
+    # El siguiente metodo define el llamado a cada uno de los modelos que estan en los servicios y devuelve un mensaje con las metricas obtenidas en el entrenamiento
 
     def algoritmos(self, entrenamiento: InfoEntrenamiento):
         
@@ -27,14 +32,17 @@ class MLearningController:
         
         elif entrenamiento.nombre_algoritmo == "ARBOLDEDECISION":
             return self.utils.prueba(msg="Métricas algormitmo Regresion Árbol de decisión",datos=self.mlearning_service.arbol_decision(entrenamiento))
+        
         elif entrenamiento.nombre_algoritmo == "REGRESIONLINEAL":
             return self.utils.prueba(msg="Métricas algormitmo Regresion Lineal",datos=self.mlearning_service.regresion_lineal(entrenamiento))
         else:
             return "Algoritmo no encontrado"
-        
+
+#metodo que iniciar el servicio de prediccion   
     def prediccion(self, prediccion: PrediccionModel):
         return self.mlearning_service.prediccion(prediccion)
-    
+
+#metodo para obtener los mejores resultados obtenidos por los diferentes algoritmos o modelos
     def obtener_mejores_algoritmos(self):
         return self.mlearning_service.obtener_top3_algoritmos()
    
