@@ -787,6 +787,8 @@ class MLearningService:
     las ordena en orden descendente según la precisión. Luego, selecciona los tres primeros elementos y los devuelve como resultado.
     '''
     def obtener_top3_algoritmos(self, nombre_dataset):
+        if self.file_service.verificar_dataset(nombre_dataset) is False:
+                return f"No existe el dataset {nombre_dataset}"
         metricas= self.mongo_service.obtener_mejores_algoritmos('InformacionModelos', nombre_dataset=nombre_dataset)
         datos = []
         if metricas:
@@ -799,6 +801,6 @@ class MLearningService:
                 for  data in mejores_tres:
                         datos.append({'nombre_algoritmo': data['nombre_algoritmo'], 'normalizacion': data['normalizacion'], 'tecnica': data['tecnica'], 'metricas': data['metricas']})
                         #print(datos)
-                return self.utils.prueba(msg="Top 3 mejores algoritmos entrenados", datos=datos)
+                return self.utils.prueba(msg=f"Top 3 mejores algoritmos entrenados con el dataset {nombre_dataset}", datos=datos)
        
             return self.utils.error(msg="No se encontraron métricas")

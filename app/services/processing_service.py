@@ -236,6 +236,8 @@ class ProcessingService:
     '''
     def obtener_ultima_matriz_confusion_algoritmo(self,nombre:str, nombre_dataset):
         try:
+            if self.file_service.verificar_dataset(nombre_dataset) is False:
+                return f"No existe el dataset {nombre_dataset}"
             if  self.utils.arreglar_nombre(nombre) == 'REGRESIONLOGISTICA':
                  nombre = 'reglog'
             elif self.utils.arreglar_nombre(nombre) == 'KNN':
@@ -289,6 +291,8 @@ class ProcessingService:
         
     async def obtener_imagen_histograma(self, nombre_dataset):
         try:
+            if self.file_service.verificar_dataset(nombre_dataset) is False:
+                return f"No existe el dataset {nombre_dataset}"
             nombre_dataset = nombre_dataset.lower()
             img = self._obtener_imagen(f"imgs/histogramas/{nombre_dataset}-histogramas")
             # print(f'IMAGEN: {img}')
@@ -301,6 +305,8 @@ class ProcessingService:
     Devuelve una lista de diccionarios que contienen el nombre del algoritmo, la normalización, la técnica utilizada y las métricas.
     '''
     def obtener_metricas_algoritmos(self, nombre_dataset):
+            if self.file_service.verificar_dataset(nombre_dataset) is False:
+                return f"No existe el dataset {nombre_dataset}"
             metricas =self.mongo_service.obtener_registros_metricas_recientes('InformacionModelos', nombre_dataset)
             datos = []
             #print(metricas)
