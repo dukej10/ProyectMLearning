@@ -76,8 +76,6 @@ class MLearningService:
         self.processing_service = ProcessingService()
         self.disponibles = None
         self.n_dataset = ""
-        self.nombre_doc = ""
-        self.file_service = FileService()
 
 
     '''
@@ -141,7 +139,7 @@ class MLearningService:
                         #self.identificar_overffing_underffing(self.modeloKNN)
                         matriz = self.obtener_matriz_confusion('knn')
                         if  matriz is None:
-                            return "error"
+                            return "Error al obtener la matriz de confusión"
                         metricas =self.metricas_hold_out()
                         self.guardar_info_modelos( 'knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                         return metricas
@@ -152,7 +150,7 @@ class MLearningService:
                         self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                         return metricas
                 else:
-                    return "error"
+                    return "Error con la preparación del dataframe"
             else:
                 return validaciones
     
@@ -178,7 +176,7 @@ class MLearningService:
                     #self.identificar_overffing_underffing(self.modeloRegLog)
                     matriz = self.obtener_matriz_confusion('reglog')
                     if  matriz is None:
-                        return "error"
+                            return "Error al obtener la matriz de confusión"
                     metricas =self.metricas_hold_out()
                     self.guardar_info_modelos('Regresión Logística', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
@@ -219,7 +217,8 @@ class MLearningService:
                     self.guardar_info_modelos('naive_bayes', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
             else:
-                return "error"
+                return "Error con la preparación del dataframe"
+
         else:
             return validaciones
     '''
@@ -233,11 +232,8 @@ class MLearningService:
         best_n_neighbors = grid_search.best_params_['n_neighbors']
         return best_n_neighbors
     
-    # def mejores_parametros_regresion_log(self):
-    #     print("entro a mejores parametros")
-
     '''
-    Este método realiza el entrenamiento y la evaluación de un modelo de Árbol de Decisión utilizando los datos de entrenamiento proporcionados. 
+    Este método realiza el entrenamiento y la evaluación de un modelo de Árbol de Decisión utilizando los datos de entrenamiento proporcionados y el nombre del dataset. 
     Aplica validaciones previas y utiliza la técnica de hold-out o cross-validation
     según la configuración especificada en entrenamiento. Retorna las métricas de evaluación del modelo.
     '''
@@ -255,7 +251,7 @@ class MLearningService:
                     self.yPredict = modelo.predict(self.XTest)
                     matriz = self.obtener_matriz_confusion('arbol_decision')
                     if  matriz is None:
-                        return "error"
+                            return "Error al obtener la matriz de confusión"
                     metricas =  self.metricas_hold_out()
                     self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
@@ -264,11 +260,12 @@ class MLearningService:
                     self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
                     return metricas
             else:
-                return "error"
+                return "Error con la preparación del dataframe"
+
         else:
             return validaciones
     '''
-    Este método realiza el entrenamiento y la evaluación de un modelo de Regresión Lineal utilizando los datos de entrenamiento proporcionados. 
+    Este método realiza el entrenamiento y la evaluación de un modelo de Regresión Lineal utilizando los datos de entrenamiento proporcionados y el nombre del dataset. 
     Aplica validaciones previas y utiliza la técnica de hold-out o cross-validation 
     según la configuración especificada en entrenamiento. Retorna las métricas de evaluación del modelo.
     '''  
@@ -294,8 +291,8 @@ class MLearningService:
                     metricas = self.validacion_cruzada_regresionLineal(modelo, entrenamiento.cantidad)
                     self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, None)
                     return metricas
-            #else:
-                #return "error"
+            else:
+                return "Error con la preparación del dataframe"
         #else:
             #return validaciones
     '''
@@ -339,14 +336,14 @@ class MLearningService:
  
 
     '''
-    recibe un objeto entrenamiento y realiza varias operaciones en un DataFrame. Filtra las columnas y valores según las columnas 
+    recibe un objeto entrenamiento, el dataset indicado y realiza varias operaciones en un DataFrame. Filtra las columnas y valores según las columnas 
     especificadas en entrenamiento.columnas_x y entrenamiento.objetivo_y. Luego, crea un DataFrame con los valores seleccionados y lo retorna.
     '''
     def preparacion_dataframe(self, entrenamiento: InfoEntrenamiento, nombre_dataset):
         try:
             datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', nombre_dataset)
             self.n_dataset = datos['nombre_dataset']
-            print('version',datos['version'])
+            # print('version',datos['version'])
             #print(datos)
             if datos:
                 union = entrenamiento.columnas_x + [entrenamiento.objetivo_y]
@@ -381,9 +378,6 @@ class MLearningService:
                 print("REDONDEAR")
                 dataNumerica = self.dataframe_service.redondear_datos(dataNumerica)
                 #print(df)
-                # print("CONCATENAR")
-                # #df = self.dataframe_service.concatenar_datos(dataNumerica, df, entrenamiento.objetivo_y)
-                # print(df)
                 print("AQUI ESTA EL DATAFRAME")
                 #print(df)
                 return df
@@ -392,7 +386,7 @@ class MLearningService:
             return  None
 
     '''
-    realiza validaciones, llama al método preparacion_dataframe y realiza diferentes operaciones dependiendo de la 
+    realiza validaciones,usa el dataset indicado llama al método preparacion_dataframe y realiza diferentes operaciones dependiendo de la 
     técnica especificada en entrenamiento.tecnica. Si la técnica es "hold-out", realiza una partición del dataset y entrena un modelo de SVM. 
     Si la técnica es "cross-validation", entrena un modelo de SVM con validación cruzada. Guarda la información del modelo y retorna las métricas.
     '''
@@ -413,7 +407,7 @@ class MLearningService:
                     self.yPredict = modelo.predict(self.XTest)
                     matriz = self.obtener_matriz_confusion('svm')
                     if matriz is None:
-                        return "error"
+                            return "Error al obtener la matriz de confusión"
                     metricas = self.metricas_hold_out()
                     self.guardar_info_modelos('svm', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
@@ -425,12 +419,12 @@ class MLearningService:
                     self.guardar_info_modelos('svm', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
             else:
-                return "error"
+                return "Error con la preparación del dataframe"
         else:
             return validaciones
 
     '''
-     guarda la información de un modelo en una base de datos.
+     guarda la información de las métricas de un modelo en una base de datos.
     '''
     def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas, matriz):
         fecha_actual = datetime.datetime.now().strftime('%d-%m-%Y')
@@ -572,14 +566,14 @@ class MLearningService:
     
 
     '''
-    verifica si las columnas especificadas son válidas en el dataset.
+    verifica si las columnas especificadas son válidas en el dataset indicado.
     '''
     def validar_columnas(self, columnas, nombre_dataset):
         self.disponibles= self.processing_service.columnas_disponibles_dataset(nombre_dataset)
         self.disponibles = self.reemplazar_caracteres_especiales(self.disponibles)
         columnas = self.reemplazar_caracteres_especiales(columnas)
-        print("Columnas disponibles: ", self.disponibles)
-        print("columnas que llegaron ", columnas)
+        # print("Columnas disponibles: ", self.disponibles)
+        # print("columnas que llegaron ", columnas)
         if self.disponibles != None:
             if set(columnas) <= set(self.disponibles) or columnas in self.disponibles:
                 return True
@@ -650,7 +644,7 @@ class MLearningService:
         return {'accuracy': accuracy_media, 'precision': precision_media, 'recall': recall_media, 'f1': f1_media}, matriz_confusion
     
     '''
-     Esta función guarda un modelo en un archivo pickle. Toma el modelo y el nombre del modelo como argumentos y utiliza la biblioteca pickle para guardar el modelo en un archivo.
+     Esta función guarda un modelo en un archivo pickle. Toma el modelo, el nombre del modelo y del dataset como argumentos y utiliza la biblioteca pickle para guardar el modelo en un archivo.
     '''
     def guardar_modelo(self, modelo, nombre_modelo):
         #print(self.XTest.columns)
@@ -665,7 +659,7 @@ class MLearningService:
             return None
 
     '''
-    Esta función realiza una predicción utilizando un modelo previamente entrenado. 
+    Esta función realiza una predicción utilizando un modelo previamente entrenado para el dataset indicado. 
     Primero, obtiene los datos necesarios para realizar la predicción del servicio Mongo 
     utilizando el algoritmo proporcionado. Luego, verifica si los valores de predicción 
     coinciden con los campos con los que se entrenó el modelo. Si coinciden, codifica los valores 
@@ -695,8 +689,6 @@ class MLearningService:
                     # Cargar el modelo desde el archivo
                     ruta_modelo = 'app/files/modelos/'
                     modelo = self.__obtener_modelo(ruta_modelo, prediccion.algoritmo, nombre_dataset)
-                    #print("encontro modelo")
-                    #print(prediccion.valores_predecir)
                     # Crear un dataframe con los datos codificados
                     ejemplo_prueba = pd.DataFrame(prediccion.valores_predecir, index=[0])
                     if modelo:
@@ -783,7 +775,7 @@ class MLearningService:
                 return None
 
     '''
-    Esta función obtiene los tres mejores algoritmos entrenados en función de la métrica de precisión. Utiliza el servicio Mongo para obtener las métricas de los modelos y 
+    Esta función obtiene los tres mejores algoritmos entrenados para el dataset indicado en función de la métrica de precisión. Utiliza el servicio Mongo para obtener las métricas de los modelos y 
     las ordena en orden descendente según la precisión. Luego, selecciona los tres primeros elementos y los devuelve como resultado.
     '''
     def obtener_top3_algoritmos(self, nombre_dataset):

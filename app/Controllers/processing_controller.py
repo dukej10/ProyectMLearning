@@ -50,7 +50,7 @@ class ProcessingController:
             ubicaciones = self.processing_service.generar_img_analisis(nombre_dataset)
             if ubicaciones:
                 return  (self.utils.prueba(msg='Se generaron las imagenes de análisis', datos= ubicaciones)), 200
-            return (self.utils.prueba(msg='No hay tipos de datos')), 200
+            return (self.utils.prueba(msg=f'No hay tipos de datos para el dataset {nombre_dataset}')), 200
         except Exception as e:
             return self.utils.prueba(msg=f'Error al obtener los tipos de datos: {str(e)}'), 500
         
