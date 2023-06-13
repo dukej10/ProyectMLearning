@@ -21,7 +21,6 @@ class ProcessingService:
         self.mongo_service = MongoDBService()
         self.file_service = FileService()
         self.utils = Utils()
-
     '''
     Este método obtiene el último registro de un conjunto de datos desde MongoDB y el último archivo de la carpeta "sets". 
     Luego, crea un DataFrame a partir de los datos obtenidos y verifica si hay valores nulos en el DataFrame. 
@@ -29,6 +28,8 @@ class ProcessingService:
     '''
     def descarte_datos(self, nombre_dataset):
         try:
+            if self.file_service.verificar_dataset(nombre_dataset) is False:
+                return f"No existe el dataset {nombre_dataset}"
             datos = self.mongo_service.obtener_ultimo_registro("Dataset",nombre_dataset=nombre_dataset ) 
             ruta_archivo = self.file_service.obtener_ultimo_archivo("sets")
             # Lee el archivo Excel o utiliza tu DataFrame existente
@@ -58,7 +59,7 @@ class ProcessingService:
                     print("No hay columnas con valores nulos.")
                     return "No hay columnas con valores nulos."
             else:
-                return "No hay datos"
+                return f"No hay datos del dataset {nombre_dataset}"
         except Exception as e:
             print(f'Error al tratar los datos: {str(e)}')
             return None
@@ -69,6 +70,8 @@ class ProcessingService:
     '''  
     def imputacion_datos(self, nombre_dataset):
         try:
+            if self.file_service.verificar_dataset(nombre_dataset) is False:
+                return f"No existe el dataset {nombre_dataset}"
             ruta_archivo = self.file_service.obtener_ultimo_archivo("sets")
             datos = self.mongo_service.obtener_ultimo_registro_por_nombre("Dataset", nombre_dataset) 
             # Lee el archivo Excel o utiliza tu DataFrame existente
@@ -99,7 +102,7 @@ class ProcessingService:
                     # Guarda una copia del DataFrame modificado en un archivo Excel
                     return self.file_service._copia_excel(df, ruta_archivo, "imputacion-")
             else:
-                return "No hay datos"
+                return f"No hay datos del dataset {nombre_dataset}"
         except Exception as e:
             print(f'Error al tratar los datos: {str(e)}')
             return None
@@ -155,10 +158,12 @@ class ProcessingService:
     Luego, genera un histograma y una matriz de correlación para las columnas numéricas del DataFrame.
     Guarda las imágenes generadas en las carpetas correspondientes y devuelve las ubicaciones de las imágenes.
     '''
-    def generar_img_analisis(self):
+    def generar_img_analisis(self, nombre_dataset):
         try:
+            if self.file_service.verificar_dataset(nombre_dataset) is False:
+                return f"No existe el dataset {nombre_dataset}"
             # Lee el archivo Excel o utiliza tu DataFrame existente
-            datos = self.mongo_service.obtener_ultimo_registro('Dataset')    
+            datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', nombre_dataset)    
             # print(dataframe)
             if datos:
                 titulos = datos["titulos"]
@@ -167,7 +172,7 @@ class ProcessingService:
 
                 # Obtener las columnas numéricas del DataFrame
                 numerico = df.select_dtypes(np.number)
-                self._generate_histograma(numerico)
+                self._generate_histograma(numerico, nombre_dataset)
                 
                 ubicacion_histograma = self.file_service.obtener_ultimo_archivo("imgs/histogramas")
                 ubicacion_matriz = self.file_service.obtener_ultimo_archivo("imgs/matriz_correlacion")
@@ -184,22 +189,22 @@ class ProcessingService:
     '''
     Estos son métodos privados utilizados por el método "generar_img_analisis" para generar el histograma y la matriz de correlación, respectivamente.
     '''
-    def _generate_histograma(self, columnas_numericas):
+    def _generate_histograma(self, columnas_numericas, nombre_dataset):
          # Configurar el tamaño y el estilo de la figura
                 plt.rcParams['figure.figsize'] = (16, 9)
                 plt.style.use('ggplot')
-                filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + 'histogramas.png'
+                filename = nombre_dataset+ '-' + 'histogramas.png'
                 # Generar los histogramas
                 columnas_numericas.hist()
                 plt.savefig('app/files/imgs/histogramas/' + filename)
-                self._generate_matriz_correlacion(columnas_numericas, plt)
+                self._generate_matriz_correlacion(columnas_numericas, plt, nombre_dataset)
 
-    def _generate_matriz_correlacion(self, columnas_numericas, plt):
+    def _generate_matriz_correlacion(self, columnas_numericas, plt, nombre_dataset):
         colormap = plt.cm.coolwarm
         plt.figure(figsize=(12,12))
-        plt.title('Bank', y=1.05, size=15)
+        plt.title(nombre_dataset, y=1.05, size=15)
         sb.heatmap(columnas_numericas.astype(float).corr(),linewidths=0.1,vmax=1.0, square=True, cmap=colormap, linecolor='white', annot=True)
-        filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + 'matriz_correlacion.png'
+        filename = nombre_dataset + '-' + 'matriz_correlacion.png'
         plt.savefig('app/files/imgs/matriz_correlacion/' + filename)
         plt.close()
     '''
@@ -207,8 +212,9 @@ class ProcessingService:
     '''
     def _obtener_imagen(self, ubicacion):
         try: 
-            # print("IMAGEN")
+            # print("UBICACION  ", ubicacion)
             ubicacion_img = self.file_service.obtener_ultimo_archivo(ubicacion)
+            print("UBICACION  ", ubicacion_img)
             if ubicacion_img:
                 path_img = os.path.join(ubicacion_img)
                 path_img = os.path.abspath(path_img)
@@ -226,14 +232,24 @@ class ProcessingService:
     '''
      Este método recibe el nombre de un algoritmo y busca la última matriz de confusión generada para ese algoritmo. Devuelve la ubicación de la última imagen generada.
     '''
-    def obtener_ultima_matriz_confusion_algoritmo(self,nombre:str):
+    def obtener_ultima_matriz_confusion_algoritmo(self,nombre:str, nombre_dataset):
         try:
-            if nombre.upper().replace(" ", "") == 'REGRESIONLOGISTICA':
-                nombre = 'reglog'
-            elif nombre.upper().replace(" ", "") == 'KNN':
-                nombre = 'knn'
+            if  self.utils.arreglar_nombre(nombre) == 'REGRESIONLOGISTICA':
+                 nombre = 'reglog'
+            elif self.utils.arreglar_nombre(nombre) == 'KNN':
+                 nombre = 'knn'
+            elif self.utils.arreglar_nombre(nombre) == 'NAIVEBAYES':
+                 nombre = 'naive_bayes'
+            elif self.utils.arreglar_nombre(nombre) == 'ARBOLDEDECISION':
+                 nombre = 'arbol_decision'
+            elif self.utils.arreglar_nombre(nombre) == 'SVM':
+                 nombre = 'svm'
+            else:
+                return {'mensaje':f"No se encontr+o matriz de confusion para el algoritmo {nombre} del dataset {nombre_dataset}"}, 404
             # Obtener la lista de archivos que coinciden con el nombre proporcionado
-            archivos = glob.glob(f"app/files/imgs/modelos/matrices_correlacion/{nombre}*.png")
+            ruta = "app/files/imgs/modelos/matrices-confusion/"
+
+            archivos = glob.glob(f"app/files/imgs/modelos/matrices-confusion/{nombre_dataset}*{nombre}*.png")
             aux = []
             #print("ARCHIVOS ", archivos)
             for archivo in archivos:
@@ -246,19 +262,21 @@ class ProcessingService:
 
             # Verificar si se encontraron archivos
             if archivos:
+                print(archivo[0])
                 # Devolver la ruta de la última imagen generada
                 return archivos[0]
             else:
-                return {'mensaje':f"No se encontraron matriz de confusion para el algoritmo {nombre}."}, 404
+                return {'mensaje':f"No se encontr+o matriz de confusion para el algoritmo {nombre} del dataset {nombre_dataset}"}, 404
         except FileNotFoundError as e:
                 return {'mensaje':f"Error al obtener la matriz de confusion del algoritmo {nombre}."}, 500
     
     '''
     Estos métodos obtienen la ubicación de la imagen de la matriz de correlación y el histograma, respectivamente.
     '''
-    def obtener_imagen_matriz(self):
+    def obtener_imagen_matriz(self, nombre_dataset):
         try:
-            img = self._obtener_imagen("imgs/matriz_correlacion")
+            nombre_dataset = nombre_dataset.lower()
+            img = self._obtener_imagen(f"imgs/matriz_correlacion/{nombre_dataset}-matriz_correlacion")
             # print("TENGO IMAGEN" + img)
             if img:
                 return img
@@ -267,10 +285,10 @@ class ProcessingService:
         except FileNotFoundError as e:
             return {'mensaje':f'Error al obtener la imagen de la matriz de correlación: {str(e)}'}, 404
         
-    async def obtener_imagen_histograma(self):
+    async def obtener_imagen_histograma(self, nombre_dataset):
         try:
-            # print("HISTOGRAMA service")
-            img = self._obtener_imagen("imgs/histogramas")
+            nombre_dataset = nombre_dataset.lower()
+            img = self._obtener_imagen(f"imgs/histogramas/{nombre_dataset}-histogramas")
             # print(f'IMAGEN: {img}')
             return img
         except FileNotFoundError as e:
