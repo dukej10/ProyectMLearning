@@ -39,20 +39,12 @@ class DataframeService:
         valores_originales = dataframe[colsAll].copy()
         #print("COLUMNAS ", cat_colsAll)
         for col in cat_colsAll:
-                # print("COL ", col)
-                # if col in cat_colsAll:
                 dataframe[col] = encoder.fit_transform(dataframe[col])
-                # print("CODIFICADO ", col)
                 # Obtener los valores originales correspondientes a cada valor codificado
                 valores_originales[col] = encoder.inverse_transform(dataframe[col])
-                # else:
-                #     valores_originales[col] = dataframe[col]
-                
-                
-        print("COLUMNAS ", cat_colsAll)
+              
 # # Obtener los valor originales y codificado de cada columna elemento de las columnas
         for col in cat_colsAll:
-                #print("COL ", col)
                 for valor_codificado, valor_original in zip(dataframe[col], valores_originales[col]):
                     if col == entrenamiento.objetivo_y:
                         if valor_codificado not in aux:
@@ -72,7 +64,7 @@ class DataframeService:
                 auxX2 = []
 
         if len(listY) > 0:
-             print("guardar json")
+            #  print("guardar json")
              id = self.mongo_service.guardar_json({"nombre_dataset": nombre_dataset,"nombre_algoritmo":entrenamiento.nombre_algoritmo, "datosY":listY, "datosX":listX,'x':entrenamiento.columnas_x, 'y':entrenamiento.objetivo_y  }, "RepresentacionCodificacion")
         return dataframe
     
@@ -82,10 +74,7 @@ class DataframeService:
     '''
 
     def  normalizar_informacion(self, dataframe, tipo, objetivo_y):
-         #print("dataframe")
          dataNumerica = dataframe.select_dtypes(np.number)
-     #     columnas_no_y = dataNumerica.columns[dataNumerica.columns != objetivo_y]
-     #     dataNumerica = dataNumerica[columnas_no_y]
          if tipo == "min-max":
           escalador=MinMaxScaler()
           dataNumerica=pd.DataFrame(escalador.fit_transform(dataNumerica), columns = dataNumerica.columns)
