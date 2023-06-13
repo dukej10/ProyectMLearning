@@ -127,6 +127,8 @@ class ProcessingService:
     def obtener_tipo_datos(self, nombre_dataset):
         
         try:
+            if self.file_service.verificar_dataset(nombre_dataset) is False:
+                return f"No existe el dataset {nombre_dataset}"
             datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', nombre_dataset)    
             if datos:
                 titulos = datos["titulos"]
