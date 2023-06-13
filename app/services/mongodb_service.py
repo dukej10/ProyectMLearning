@@ -1,3 +1,4 @@
+import re
 from pymongo import MongoClient
 from app.db.db import MongoConnection
 
@@ -83,7 +84,7 @@ class MongoDBService:
     '''
     Obtiene el último registro de la colección especificada en MongoDB. Ordena los registros por ID de forma descendente y devuelve el primer registro.
     '''
-    def obtener_ultimo_registro(self, coleccion):
+    def obtener_ultimo_registro(self, coleccion, nombre_dataset):
         try:
             self.collection = self.db[coleccion]
             result = self.collection.find_one(sort=[('_id', -1)])
@@ -93,16 +94,34 @@ class MongoDBService:
         except Exception as e:
             print(f'Error al obtener el ultimo registro: {str(e)}')
             return None
+        
+    def obtener_ultimo_registro_por_nombre(self, coleccion, nombre):
+        try:
+            self.collection = self.db[coleccion]
+            regex_pattern = f".*{re.escape(nombre)}.*"
+            query = {"nombre_dataset": {"$regex": regex_pattern, "$options": "i"}}
+            sort_query = [('_id', -1)]
+            result = self.collection.find_one(query, sort=sort_query)
+            # print(f'JSON obtenido en MongoDB\n : {str(result)}')
+            # print(type(result))
+            return result
+        except Exception as e:
+            print(f'Error al obtener el ultimo registro: {str(e)}')
+            return None
+
     '''
      Obtiene los datos de un algoritmo específico en la colección especificada de MongoDB. Busca un registro con el nombre del algoritmo en mayúsculas y devuelve el resultado.
     '''
-    def obtener_datos_algoritmo(self, coleccion, nombre_algoritmo):
+    def obtener_datos_algoritmo(self, coleccion, nombre_algoritmo, nombre_dataset):
         try:
+            print(nombre_dataset)
+            print(nombre_algoritmo)
             self.collection = self.db[coleccion]
-            result = self.collection.find_one({
-                "nombre_algoritmo": nombre_algoritmo.upper()
-            })
+            regex_pattern = f".*{re.escape(nombre_dataset)}.*"
+            query = {"nombre_dataset": {"$regex": regex_pattern, "$options": "i"},"nombre_algoritmo": nombre_algoritmo.upper()}
+            result = self.collection.find_one(query)
             if result:
+                print(result)
                 return result
             return None
         except Exception as e:
@@ -111,11 +130,14 @@ class MongoDBService:
     '''
     Obtiene la fecha más reciente de los registros en la colección especificada de MongoDB. Ordena los registros por fecha de forma descendente y devuelve la fecha del primer registro.
     '''   
-    def obtener_fecha_mas_reciente(self, coleccion):
+    def obtener_fecha_mas_reciente(self, coleccion, nombre):
         try:
             self.collection = self.db[coleccion]
-            result = self.collection.find_one(sort=[('fecha', -1)])
-            # print(f'Fecha más recientess: {result}')
+            regex_pattern = f".*{re.escape(nombre)}.*"
+            query = {"nombre_dataset": {"$regex": regex_pattern}}
+            sort_query = [('fecha', -1)]
+            result = self.collection.find_one(query, sort=sort_query)
+            # print(f'Fecha más reciente: {result}')
             if result:
                 fecha_mas_reciente = result['fecha']
                 return fecha_mas_reciente
@@ -128,15 +150,15 @@ class MongoDBService:
     Obtiene los registros de métricas más recientes en la colección especificada de MongoDB. Utiliza la función obtener_fecha_mas_reciente 
     para obtener la fecha más reciente y luego busca los registros que coinciden con esa fecha. Devuelve una lista de registros.
     '''
-    def obtener_registros_metricas_recientes(self, coleccion):
+    def obtener_registros_metricas_recientes(self, coleccion, nombre_dataset):
         try:
-            fecha_mas_reciente = self.obtener_fecha_mas_reciente(coleccion)
+            fecha_mas_reciente = self.obtener_fecha_mas_reciente(coleccion, nombre_dataset)
             print(f'Fecha más reciente: {fecha_mas_reciente}')
-            if fecha_mas_reciente != "":
+            if fecha_mas_reciente:
                 self.collection = self.db[coleccion]
-                result = self.collection.find(
-                    filter={'fecha': fecha_mas_reciente}
-                )
+                regex_pattern = f".*{re.escape(nombre_dataset)}.*"
+                query = {"nombre_dataset": {"$regex": regex_pattern}, "fecha": fecha_mas_reciente}
+                result = self.collection.find(query)
                 registros = [registro for registro in result]
                 return registros
             else:
@@ -147,9 +169,9 @@ class MongoDBService:
     '''
      Obtiene los registros de métricas más recientes en la colección especificada de MongoDB. Utiliza la función obtener_registros_metricas_recientes para obtener los registros y los devuelve
     '''
-    def obtener_mejores_algoritmos(self, coleccion):
+    def obtener_mejores_algoritmos(self, coleccion, nombre_dataset):
         try:
-            registros= self.obtener_registros_metricas_recientes(coleccion)
+            registros= self.obtener_registros_metricas_recientes(coleccion, nombre_dataset)
             #print(f'Registros: {registros}')
             return registros 
         except Exception as e:

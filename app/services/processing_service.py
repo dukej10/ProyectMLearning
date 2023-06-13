@@ -27,9 +27,9 @@ class ProcessingService:
     Luego, crea un DataFrame a partir de los datos obtenidos y verifica si hay valores nulos en el DataFrame. 
     Si encuentra valores nulos, elimina las columnas correspondientes y guarda una copia del DataFrame modificado en un archivo Excel.
     '''
-    def descarte_datos(self):
+    def descarte_datos(self, nombre_dataset):
         try:
-            datos = self.mongo_service.obtener_ultimo_registro("Dataset") 
+            datos = self.mongo_service.obtener_ultimo_registro("Dataset",nombre_dataset=nombre_dataset ) 
             ruta_archivo = self.file_service.obtener_ultimo_archivo("sets")
             # Lee el archivo Excel o utiliza tu DataFrame existente
             nombre_archivo = os.path.basename(ruta_archivo)
@@ -67,10 +67,10 @@ class ProcessingService:
      A continuación, crea un DataFrame a partir de los datos obtenidos y realiza la imputación de valores nulos en las 
      columnas correspondientes. Si se realizan cambios debido a la imputación, guarda una copia del DataFrame modificado en un archivo Excel.
     '''  
-    def imputacion_datos(self):
+    def imputacion_datos(self, nombre_dataset):
         try:
             ruta_archivo = self.file_service.obtener_ultimo_archivo("sets")
-            datos = self.mongo_service.obtener_ultimo_registro("Dataset") 
+            datos = self.mongo_service.obtener_ultimo_registro_por_nombre("Dataset", nombre_dataset) 
             # Lee el archivo Excel o utiliza tu DataFrame existente
             nombre_archivo = os.path.basename(ruta_archivo)
             if datos:
@@ -106,12 +106,13 @@ class ProcessingService:
     '''
     Este método obtiene el último registro de un conjunto de datos desde MongoDB y devuelve los títulos de las columnas disponibles.
     '''   
-    def columnas_disponibles_dataset(self):
+    def columnas_disponibles_dataset(self, nombre_dataset):
         try:
-            datos = self.mongo_service.obtener_ultimo_registro("Dataset")
+            datos = self.mongo_service.obtener_ultimo_registro_por_nombre("Dataset", nombre_dataset)
             if datos:
                 #print(datos["titulos"])
                 titulos = datos["titulos"]
+                # print("OE " ,titulos)
                 return titulos
         except Exception as e:
             print(f'Error al obtener los datos: {str(e)}')
@@ -120,10 +121,10 @@ class ProcessingService:
     Este método obtiene el último registro de un conjunto de datos desde MongoDB y crea un DataFrame a partir de los datos obtenidos. 
     Luego, clasifica las columnas del DataFrame en tres categorías: numérico, texto y booleano, y devuelve un diccionario con las columnas clasificadas.
     '''
-    def obtener_tipo_datos(self):
+    def obtener_tipo_datos(self, nombre_dataset):
         
         try:
-            datos = self.mongo_service.obtener_ultimo_registro('Dataset')    
+            datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', nombre_dataset)    
             if datos:
                 titulos = datos["titulos"]
                 valores = datos['valores']
@@ -279,8 +280,8 @@ class ProcessingService:
     Este método obtiene las métricas de los modelos de algoritmos más recientes almacenados en MongoDB. 
     Devuelve una lista de diccionarios que contienen el nombre del algoritmo, la normalización, la técnica utilizada y las métricas.
     '''
-    def obtener_metricas_algoritmos(self):
-            metricas =self.mongo_service.obtener_registros_metricas_recientes('InformacionModelos')
+    def obtener_metricas_algoritmos(self, nombre_dataset):
+            metricas =self.mongo_service.obtener_registros_metricas_recientes('InformacionModelos', nombre_dataset)
             datos = []
             #print(metricas)
             if metricas is not None:

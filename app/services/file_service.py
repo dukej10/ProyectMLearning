@@ -28,7 +28,7 @@ class FileService:
     '''
     async def guardar_archivo(self, file, version, ubicacion):
         try:
-            filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '_' + file.filename
+            filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '__' + file.filename
             os.makedirs(ubicacion, exist_ok=True)  # Crear la carpeta si no existe
             directory = os.path.join(ubicacion, filename)
             # print(directory)
@@ -97,7 +97,9 @@ class FileService:
                 valores = df.to_dict(orient='records')
                 # print(titulos)
                 # print(valores)
-                datos_json = {'nombreDoc':filename,'version': version ,'titulos': titulos, 'valores': valores}
+                nombre_dataset = filename.split("__")[1]
+                nombre_dataset = nombre_dataset.split(".")[0]
+                datos_json = {'nombreDoc':filename, 'nombre_dataset':nombre_dataset, 'version': version ,'titulos': titulos, 'valores': valores}
                 return datos_json
             else:
                 print('No se encontrón archivos Excel')

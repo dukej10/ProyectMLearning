@@ -8,3 +8,4 @@ class InfoEntrenamiento(BaseModel):
     tecnica: str
     cantidad: int
     normalizacion: str
+    nombre_dataset: str

@@ -23,7 +23,7 @@ class DataframeService:
     (listY y listX). Luego, guarda esta información en un objeto JSON utilizando el servicio de MongoDB si listY contiene elementos.
     '''  
 
-    def codificar_valores_cat(self, dataframe, entrenamiento: InfoEntrenamiento):
+    def codificar_valores_cat(self, dataframe, entrenamiento: InfoEntrenamiento, nombre_dataset):
         encoder=LabelEncoder()
         #print(dataframe.head())
         # Obtener todas las columnas de tipo object
@@ -73,7 +73,7 @@ class DataframeService:
 
         if len(listY) > 0:
              print("guardar json")
-             id = self.mongo_service.guardar_json({"nombre_algoritmo":entrenamiento.nombre_algoritmo, "datosY":listY, "datosX":listX,'x':entrenamiento.columnas_x, 'y':entrenamiento.objetivo_y  }, "RepresentacionCodificacion")
+             id = self.mongo_service.guardar_json({"nombre_dataset": nombre_dataset,"nombre_algoritmo":entrenamiento.nombre_algoritmo, "datosY":listY, "datosX":listX,'x':entrenamiento.columnas_x, 'y':entrenamiento.objetivo_y  }, "RepresentacionCodificacion")
         return dataframe
     
     '''

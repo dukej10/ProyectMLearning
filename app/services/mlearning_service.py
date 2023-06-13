@@ -74,6 +74,8 @@ class MLearningService:
         self.infoEntrenamiento = None
         self.processing_service = ProcessingService()
         self.disponibles = None
+        self.nombre_dataset = ""
+        self.nombre_doc = ""
 
 
     '''
@@ -82,9 +84,9 @@ class MLearningService:
     la normalización de los datos. Retorna mensajes de error específicos si alguna validación falla.
     '''
     def validaciones(self, entrenamiento: InfoEntrenamiento):
-        validar_columnas = self.validar_columnas(entrenamiento.columnas_x)
+        validar_columnas = self.validar_columnas(entrenamiento.columnas_x, entrenamiento.nombre_dataset)
         if validar_columnas:
-            validacion2 = self.validar_columnas(entrenamiento.objetivo_y)
+            validacion2 = self.validar_columnas(entrenamiento.objetivo_y, entrenamiento.nombre_dataset)
             if validacion2:
                 if entrenamiento.tecnica == 'hold-out' or entrenamiento.tecnica == "cross-validation":
                     if entrenamiento.normalizacion == 'min-max' or entrenamiento.normalizacion == 'standardscaler':
@@ -137,7 +139,7 @@ class MLearningService:
                         if  matriz is None:
                             return "error"
                         metricas =self.metricas_hold_out()
-                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                        self.guardar_info_modelos( 'knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                         return metricas
                     elif entrenamiento.tecnica == "cross-validation":
                         #print("cantidad", entrenamiento.cantidad)
@@ -330,29 +332,7 @@ class MLearningService:
                 'R-squared (R2)': list(r2_scores)}
 
         
-    #def mejores_parametros_regresion_log(self):
-    #    print("entro a mejores parametros")
-    #     parameters = {
-    #         'penalty': ['l1', 'l2'],
-    #         'C': [0.01, 0.1, 1.0, 10.0],
-    #         }   
-    #     # Crea el modelo de regresión logística
-    #     model = LogisticRegression(solver='newton-cg', max_iter=1000)
-
-    #     # Utiliza GridSearchCV para buscar los mejores parámetros
-    #     grid_search = GridSearchCV(model, parameters, cv=10)
-    #     grid_search.fit(self.XTrain, self.yTrain)
-
-    #     # Imprime los mejores parámetros encontrados
-    #     print("Mejores parámetros:", grid_search.best_params_)
-
-    #     # Evalúa el modelo con los mejores parámetros en el conjunto de prueba
-    #     best_model = grid_search.best_estimator_
-    #     accuracy = best_model.score(self.XTest, self.yTest)
-    #     print("Exactitud en el conjunto de prueba:", accuracy)
-    #     print("-------------------------------------------")
-    #     return  grid_search.best_params_
-         
+ 
 
     '''
     recibe un objeto entrenamiento y realiza varias operaciones en un DataFrame. Filtra las columnas y valores según las columnas 
@@ -360,7 +340,9 @@ class MLearningService:
     '''
     def preparacion_dataframe(self, entrenamiento: InfoEntrenamiento):
         try:
-            datos = self.mongo_service.obtener_ultimo_registro('Dataset')
+            datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', entrenamiento.nombre_dataset)
+            self.nombre_dataset = datos['nombre_dataset']
+            print('version',datos['version'])
             #print(datos)
             if datos:
                 union = entrenamiento.columnas_x + [entrenamiento.objetivo_y]
@@ -388,7 +370,7 @@ class MLearningService:
                 #print(df)
                 print("-------------------------------------------")
                 #print("CODIFICAR")
-                df = self.dataframe_service.codificar_valores_cat(df, entrenamiento)
+                df = self.dataframe_service.codificar_valores_cat(df, entrenamiento, self.nombre_dataset)
                 print("NORMALIZAR")
                 dataNumerica = self.dataframe_service.normalizar_informacion(dataframe=df, tipo=entrenamiento.normalizacion, objetivo_y= entrenamiento.objetivo_y)
                 #print(df)
@@ -449,9 +431,9 @@ class MLearningService:
     def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas, matriz):
         fecha_actual = datetime.datetime.now().strftime('%d-%m-%Y')
         if matriz is not None:
-            info = {'fecha':fecha_actual,'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
+            info = {'fecha':fecha_actual,"nombre_dataset":self.nombre_dataset, 'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
         else:    
-            info = {'fecha':fecha_actual,'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
+            info = {'fecha':fecha_actual,"nombre_dataset":self.nombre_dataset, 'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
         id = self.mongo_service.guardar_json_metricas(info, 'InformacionModelos')
         print("ID ", id)
 
@@ -588,9 +570,12 @@ class MLearningService:
     '''
     verifica si las columnas especificadas son válidas en el dataset.
     '''
-    def validar_columnas(self, columnas):
-        self.disponibles= self.processing_service.columnas_disponibles_dataset()
+    def validar_columnas(self, columnas, nombre_dataset):
+        self.disponibles= self.processing_service.columnas_disponibles_dataset(nombre_dataset)
+        self.disponibles = self.reemplazar_caracteres_especiales(self.disponibles)
+        columnas = self.reemplazar_caracteres_especiales(columnas)
         print("Columnas disponibles: ", self.disponibles)
+        print("columnas que llegaron ", columnas)
         if self.disponibles != None:
             if set(columnas) <= set(self.disponibles) or columnas in self.disponibles:
                 return True
@@ -598,6 +583,18 @@ class MLearningService:
                 return False
         else:
             return None
+        
+    def reemplazar_caracteres_especiales(self, columnas):
+        auxCol = []
+        print(len(columnas))
+        print(columnas)
+        if isinstance(columnas, list):
+            for txt in columnas:
+                auxCol.append(txt.upper().replace("Ñ","N"))
+            return auxCol
+        else:
+            columnas = columnas.upper().replace("Ñ","N")
+            return columnas
     '''
     realiza validación cruzada con un modelo dado y calcula las métricas promedio y la matriz de confusión.
     '''
@@ -657,7 +654,7 @@ class MLearningService:
            ruta_directorio = f'app/files/modelos'
            if not os.path.exists(ruta_directorio):
             os.makedirs(ruta_directorio)
-           ruta_modelo = os.path.join(ruta_directorio, f'{nombre_modelo}.pkl')
+           ruta_modelo = os.path.join(ruta_directorio, f'{self.nombre_dataset}-{nombre_modelo}.pkl')
            with open(ruta_modelo, 'wb') as archivo:
                 pickle.dump(modelo, archivo)
         except Exception as e:
@@ -672,9 +669,9 @@ class MLearningService:
     A continuación, crea un DataFrame con los datos codificados y realiza la predicción utilizando el modelo cargado. 
     Finalmente, decodifica el resultado de la predicción y lo devuelve.
     ''' 
-    def prediccion(self, prediccion: PrediccionModel):
+    def prediccion(self, prediccion: PrediccionModel, nombre_dataset):
         try:
-            datos = self.mongo_service.obtener_datos_algoritmo('RepresentacionCodificacion', prediccion.algoritmo)
+            datos = self.mongo_service.obtener_datos_algoritmo('RepresentacionCodificacion', prediccion.algoritmo,nombre_dataset )
             
             
             #print(columns_predecir)
@@ -693,7 +690,7 @@ class MLearningService:
                     prediccion = self.__codificar_valores_recibidos(datos, columns_x, prediccion, clavesReemplazadas)
                     # Cargar el modelo desde el archivo
                     ruta_modelo = 'app/files/modelos/'
-                    modelo = self.__obtener_modelo(ruta_modelo, prediccion.algoritmo)
+                    modelo = self.__obtener_modelo(ruta_modelo, prediccion.algoritmo, nombre_dataset)
                     #print("encontro modelo")
                     #print(prediccion.valores_predecir)
                     # Crear un dataframe con los datos codificados
@@ -752,31 +749,41 @@ class MLearningService:
     Esta función se utiliza en el método prediccion para obtener el modelo almacenado en un archivo pickle. 
     Construye la ruta del archivo en función del nombre del algoritmo proporcionado y carga el modelo desde el archivo utilizando la biblioteca pickle.
     '''
-    def __obtener_modelo(self, ruta_modelo, nombre_algoritmo):
-            nombre_algoritmo = self.utils.arreglar_nombre(nombre_algoritmo)
-            if nombre_algoritmo == 'KNN':
-                ruta_modelo += 'knn.pkl'
-            elif nombre_algoritmo == 'SVM':
-                ruta_modelo += 'svm.pkl'
-            elif nombre_algoritmo == 'NAIVEBAYES':
-                ruta_modelo += 'naivebayes.pkl'
-            elif nombre_algoritmo == 'REGRESIONLOGISTICA':
-                ruta_modelo += 'reglog.pkl'
-            elif nombre_algoritmo == 'ARBOLDEDECISION':
-                ruta_modelo += 'arbol_decision.pkl'
-            elif nombre_algoritmo == 'REGRESIONLINEAL':
-                ruta_modelo += 'regresion_lineal.pkl'
-
-            with open(ruta_modelo, 'rb') as archivo:
-                modelo_cargado = pickle.load(archivo)
-            return modelo_cargado
+    def __obtener_modelo(self, ruta_modelo, nombre_algoritmo, nombre_dataset):
+            nombre_algoritmo = self.utils.arreglar_nombre(nombre_algoritmo).lower()
+            patron = f'{nombre_dataset}*{nombre_algoritmo}.pkl'
+            if nombre_algoritmo == 'knn':
+                patron = f'{nombre_dataset}*knn.pkl'
+                ruta= os.path.join(ruta_modelo, patron)
+            elif nombre_algoritmo == 'svm':
+                patron = f'{nombre_dataset}*svm.pkl'
+                ruta= os.path.join(ruta_modelo, patron)
+            elif nombre_algoritmo == 'naivebayes':
+                patron = f'{nombre_dataset}*naivebayes.pkl'
+                ruta= os.path.join(ruta_modelo, patron)
+            elif nombre_algoritmo == 'regresionlogistica':
+                patron = f'{nombre_dataset}*reglog.pkl'
+                ruta= os.path.join(ruta_modelo, patron)
+            elif nombre_algoritmo == 'arboldedecision':
+                patron = f'{nombre_dataset}*arbol_decision.pkl'
+                ruta= os.path.join(ruta_modelo, patron)
+            elif nombre_algoritmo == 'regresionlineal':
+                patron = f'{nombre_dataset}*regresion_lineal.pkl'
+                ruta= os.path.join(ruta_modelo, patron)
+            if ruta:
+                archivos = glob.glob(ruta)
+                with open(archivos[0], 'rb') as archivo:
+                    modelo_cargado = pickle.load(archivo)
+                return modelo_cargado
+            else:
+                return None
 
     '''
     Esta función obtiene los tres mejores algoritmos entrenados en función de la métrica de precisión. Utiliza el servicio Mongo para obtener las métricas de los modelos y 
     las ordena en orden descendente según la precisión. Luego, selecciona los tres primeros elementos y los devuelve como resultado.
     '''
-    def obtener_top3_algoritmos(self):
-        metricas= self.mongo_service.obtener_mejores_algoritmos('InformacionModelos')
+    def obtener_top3_algoritmos(self, nombre_dataset):
+        metricas= self.mongo_service.obtener_mejores_algoritmos('InformacionModelos', nombre_dataset=nombre_dataset)
         datos = []
         if metricas:
             if len(metricas) > 0:

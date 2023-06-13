@@ -16,9 +16,9 @@ class ProcessingController:
         self.file_service = FileService()
 
  # Realiza la imputación de datos y devuelve el mensaje procesado con un código de estado
-    def imputation_data(self):
+    def imputation_data(self, nombre_dataset):
         try: 
-            msg= self.processing_service.imputacion_datos()
+            msg= self.processing_service.imputacion_datos(nombre_dataset)
             if msg:
                 return self.utils.prueba(msg=msg), 200
             return self.utils.prueba(msg='No'), 200
@@ -26,18 +26,18 @@ class ProcessingController:
             return self.utils.prueba(msg=f'Error al procesar el archivo: {str(e)}'), 500
         
  # Obtiene los tipos de datos y devuelve los tipos de datos procesados con un código de estado
-    def get_types(self):
+    def get_types(self, nombre_dataset):
         try: 
-            datos = self.processing_service.obtener_tipo_datos()
+            datos = self.processing_service.obtener_tipo_datos(nombre_dataset=nombre_dataset)
             
             return (self.utils.prueba(msg=datos)), 200
         except Exception as e:
             return self.utils.prueba(msg=f'Error al obtener los tipos de datos: {str(e)}'), 500
         
  # Realiza el descarte de datos y devuelve el mensaje procesado con un código de estado            
-    def descarte(self):
+    def descarte(self, nombre_dataset):
         try: 
-            msg = self.processing_service.descarte_datos()
+            msg = self.processing_service.descarte_datos(nombre_dataset)
             if msg:
                 return (self.utils.prueba(msg=msg)), 200
             return (self.utils.prueba(msg='No hay tipos de datos')), 200
@@ -66,8 +66,8 @@ class ProcessingController:
         return self.processing_service.obtener_ultima_matriz_confusion_algoritmo(nombre_modelo)
 
 # Obtiene las metricas de un algoritmo entrenado
-    def metricas_algoritmos_entrenados(self):
+    def metricas_algoritmos_entrenados(self, nombre_dataset):
 
-        return self.processing_service.obtener_metricas_algoritmos()
+        return self.processing_service.obtener_metricas_algoritmos(nombre_dataset=nombre_dataset)
 
         

@@ -39,10 +39,10 @@ class MLearningController:
             return "Algoritmo no encontrado"
 
 #metodo que iniciar el servicio de prediccion   
-    def prediccion(self, prediccion: PrediccionModel):
-        return self.mlearning_service.prediccion(prediccion)
+    def prediccion(self, prediccion: PrediccionModel, nombre_dataset):
+        return self.mlearning_service.prediccion(prediccion, nombre_dataset)
 
 #metodo para obtener los mejores resultados obtenidos por los diferentes algoritmos o modelos
-    def obtener_mejores_algoritmos(self):
-        return self.mlearning_service.obtener_top3_algoritmos()
+    def obtener_mejores_algoritmos(self, nombre_dataset: str):
+        return self.mlearning_service.obtener_top3_algoritmos(nombre_dataset=nombre_dataset)
    

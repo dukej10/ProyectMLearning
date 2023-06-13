@@ -44,13 +44,13 @@ async def get_matriz_correlacion():
     
 #metodo que impelementa el servicio de descarte
 @todo_api_router.get('/descarte')
-def descarte():
-    return processing_controller.descarte()
+def descarte(nombre_dataset: str):
+    return processing_controller.descarte(nombre_dataset)
 
 #ruta que maneja el servicio de imputacion
 @todo_api_router.get('/imputacion')
-def imputacion():
-    return processing_controller.imputation_data()
+def imputacion(nombre_dataset: str):
+    return processing_controller.imputation_data(nombre_dataset)
 
 #metodo que inciar el servicio de generar imagener
 @todo_api_router.get('/generar-imagenes', description="Genera las imagenes de analisis de los datos histograma y matriz")
@@ -65,8 +65,8 @@ async def upload_file(file: UploadFile = File(...)):
 
 #ruta para obtener el tipo de datos
 @todo_api_router.get("/tipos-datos", description="Obtiene los tipos de datos de los datos del dataset")
-async def get_types():
-    return processing_controller.get_types()
+async def get_types(nombre_dataset):
+    return processing_controller.get_types(nombre_dataset)
 #ruta para el servicio de knn
 @todo_api_router.get("/knn")
 async def knn():
@@ -85,7 +85,8 @@ async def entrenamiento_algoritmo(entrenamiento: InfoEntrenamiento= Body(..., ex
   "objetivo_y": "indicador",
   "tecnica": "hold-out",
   "cantidad": 20,
-  "normalizacion": "min-max"
+  "normalizacion": "min-max",
+  "nombre_dataset": "manizales"
 })):
    print(entrenamiento)
    return mlearning_controller.algoritmos(entrenamiento)
@@ -100,12 +101,12 @@ async def matriz_confusional(nombre_algoritmo: str):
        return img_path
 #ruta para obtener la descripcion de los algoritmos entrenados
 @todo_api_router.get("/metricas-algoritmos-entrenados", description="Permite obtener las métricas que obtuvieron los algoritmos entrenados")
-async def metricas_algoritmos_entrenados():
-    return processing_controller.metricas_algoritmos_entrenados()
+async def metricas_algoritmos_entrenados(nombre_dataset: str):
+    return processing_controller.metricas_algoritmos_entrenados(nombre_dataset=nombre_dataset)
 
 #ruta del servicio de prediccion 
 @todo_api_router.post("/prediccion", description="Predicción de algoritmo \n  nombre_algoritmo: nombre del algoritmo a utilizar, columnas_x: variables a usar para x, objetivo_y: columna objetivo, tecnica: hold-out o cross-validation, cantidad: % partición dataset o número de folds para cv, normalizacion: min-max o standarscaler")
-async def prediccion_algoritmo(prediccion: PrediccionModel= Body(..., example={
+async def prediccion_algoritmo(nombre_dataset:str, prediccion: PrediccionModel= Body(..., example={
             'algoritmo': 'knn',
             'valores_predecir': {
                 "Area": "Manizales",
@@ -114,13 +115,13 @@ async def prediccion_algoritmo(prediccion: PrediccionModel= Body(..., example={
                 "agrupa": "adultos",
                 "valor": 20000,
                 "año": 2015,
-                "mes": "Enero"
-                }
+                "mes": "Enero",
+                "nombre_dataset": "manizales"                }
         })):
-    return mlearning_controller.prediccion(prediccion)
+    return mlearning_controller.prediccion(prediccion, nombre_dataset)
 
 #ruta para obtener el top de los algoritmos que se han entrenado
 @todo_api_router.get("/top3-algoritmos", description="Permite obtener los 3 mejores algoritmos entrenados")
-async def top3_algoritmos():
-    return mlearning_controller.obtener_mejores_algoritmos()
+async def top3_algoritmos(nombre_dataset: str):
+    return mlearning_controller.obtener_mejores_algoritmos(nombre_dataset)
     
