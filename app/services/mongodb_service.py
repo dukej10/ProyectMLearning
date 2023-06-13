@@ -178,3 +178,16 @@ class MongoDBService:
             print(f'Error al obtener los mejores algoritmos: {str(e)}')
             return None
     
+
+    def obtener_nombres_dataset(self, coleccion):
+        try:
+            nombres_dataset = []
+            self.collection = self.db[coleccion]
+            for documento in self.collection.find():
+                nombre_dataset = documento.get("nombre_dataset")
+                if nombre_dataset and nombre_dataset not in nombres_dataset:
+                    nombres_dataset.append(nombre_dataset)
+            return nombres_dataset
+        except Exception as e:
+            print("Error al obtener los nombres del dataset")
+            return None

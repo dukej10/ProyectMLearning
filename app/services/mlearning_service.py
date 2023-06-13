@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.calibration import cross_val_predict
 from sklearn.linear_model import LogisticRegression
 from app.models.prediccion_model import PrediccionModel
+from app.services.file_service import FileService
 from app.services.mongodb_service import MongoDBService
 from app.services.processing_service import ProcessingService
 from app.utils.utils import Utils
@@ -74,8 +75,9 @@ class MLearningService:
         self.infoEntrenamiento = None
         self.processing_service = ProcessingService()
         self.disponibles = None
-        self.nombre_dataset = ""
+        self.n_dataset = ""
         self.nombre_doc = ""
+        self.file_service = FileService()
 
 
     '''
@@ -83,10 +85,12 @@ class MLearningService:
     Verifica la existencia de columnas y valida diferentes parámetros relacionados con la técnica de entrenamiento y
     la normalización de los datos. Retorna mensajes de error específicos si alguna validación falla.
     '''
-    def validaciones(self, entrenamiento: InfoEntrenamiento):
-        validar_columnas = self.validar_columnas(entrenamiento.columnas_x, entrenamiento.nombre_dataset)
+    def validaciones(self, entrenamiento: InfoEntrenamiento, nombre_dataset):
+        if self.file_service.verificar_dataset(nombre_dataset) is False:
+            return f"No existe el dataset {nombre_dataset}"
+        validar_columnas = self.validar_columnas(entrenamiento.columnas_x, nombre_dataset)
         if validar_columnas:
-            validacion2 = self.validar_columnas(entrenamiento.objetivo_y, entrenamiento.nombre_dataset)
+            validacion2 = self.validar_columnas(entrenamiento.objetivo_y, nombre_dataset)
             if validacion2:
                 if entrenamiento.tecnica == 'hold-out' or entrenamiento.tecnica == "cross-validation":
                     if entrenamiento.normalizacion == 'min-max' or entrenamiento.normalizacion == 'standardscaler':
@@ -120,10 +124,10 @@ class MLearningService:
     Aplica validaciones previas y utiliza la técnica de hold-out o cross-validation según 
     la configuración especificada en entrenamiento. Retorna las métricas de evaluación del modelo.
     '''
-    def knn(self, entrenamiento: InfoEntrenamiento):
-            validaciones = self.validaciones(entrenamiento)
+    def knn(self, entrenamiento: InfoEntrenamiento, nombre_dataset):
+            validaciones = self.validaciones(entrenamiento, nombre_dataset)
             if validaciones is True:
-                dataframe = self.preparacion_dataframe(entrenamiento)
+                dataframe = self.preparacion_dataframe(entrenamiento, nombre_dataset)
                 if dataframe is not None:
                     self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
                     if entrenamiento.tecnica == "hold-out":
@@ -157,10 +161,10 @@ class MLearningService:
     Aplica validaciones previas y utiliza la técnica de hold-out o cross-validation según la 
     configuración especificada en entrenamiento. Retorna las métricas de evaluación del modelo.
     '''
-    def regresion_logistica(self, entrenamiento: InfoEntrenamiento):
-        validaciones = self.validaciones(entrenamiento)
+    def regresion_logistica(self, entrenamiento: InfoEntrenamiento, nombre_dataset):
+        validaciones = self.validaciones(entrenamiento, nombre_dataset)
         if validaciones is True:
-            dataframe = self.preparacion_dataframe(entrenamiento)
+            dataframe = self.preparacion_dataframe(entrenamiento, nombre_dataset)
             if dataframe is not None:
                 self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
                 if entrenamiento.tecnica == "hold-out":
@@ -191,10 +195,10 @@ class MLearningService:
     Aplica validaciones previas y utiliza la técnica de hold-out o cross-validation según la 
     configuración especificada en entrenamiento. Retorna las métricas de evaluación del modelo.
     '''
-    def naive_bayes(self, entrenamiento: InfoEntrenamiento):
-        validaciones = self.validaciones(entrenamiento)
+    def naive_bayes(self, entrenamiento: InfoEntrenamiento, nombre_dataset):
+        validaciones = self.validaciones(entrenamiento, nombre_dataset)
         if validaciones is True:
-            dataframe = self.preparacion_dataframe(entrenamiento)
+            dataframe = self.preparacion_dataframe(entrenamiento, nombre_dataset)
             if dataframe is not None:
                 self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
                 if entrenamiento.tecnica == "hold-out":
@@ -237,10 +241,10 @@ class MLearningService:
     Aplica validaciones previas y utiliza la técnica de hold-out o cross-validation
     según la configuración especificada en entrenamiento. Retorna las métricas de evaluación del modelo.
     '''
-    def arbol_decision(self, entrenamiento: InfoEntrenamiento):
-        validaciones = self.validaciones(entrenamiento)
+    def arbol_decision(self, entrenamiento: InfoEntrenamiento, nombre_dataset):
+        validaciones = self.validaciones(entrenamiento, nombre_dataset)
         if validaciones is True:
-            dataframe = self.preparacion_dataframe(entrenamiento)
+            dataframe = self.preparacion_dataframe(entrenamiento, nombre_dataset)
             if dataframe is not None:
                 self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
                 modelo = DecisionTreeClassifier()
@@ -268,10 +272,10 @@ class MLearningService:
     Aplica validaciones previas y utiliza la técnica de hold-out o cross-validation 
     según la configuración especificada en entrenamiento. Retorna las métricas de evaluación del modelo.
     '''  
-    def regresion_lineal(self, entrenamiento: InfoEntrenamiento):
-        validaciones = self.validaciones(entrenamiento)
+    def regresion_lineal(self, entrenamiento: InfoEntrenamiento, nombre_dataset):
+        validaciones = self.validaciones(entrenamiento, nombre_dataset)
         if validaciones is True:
-            dataframe = self.preparacion_dataframe(entrenamiento)
+            dataframe = self.preparacion_dataframe(entrenamiento, nombre_dataset)
             if dataframe is not None:
                 self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
                 if entrenamiento.tecnica == "hold-out":
@@ -338,10 +342,10 @@ class MLearningService:
     recibe un objeto entrenamiento y realiza varias operaciones en un DataFrame. Filtra las columnas y valores según las columnas 
     especificadas en entrenamiento.columnas_x y entrenamiento.objetivo_y. Luego, crea un DataFrame con los valores seleccionados y lo retorna.
     '''
-    def preparacion_dataframe(self, entrenamiento: InfoEntrenamiento):
+    def preparacion_dataframe(self, entrenamiento: InfoEntrenamiento, nombre_dataset):
         try:
-            datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', entrenamiento.nombre_dataset)
-            self.nombre_dataset = datos['nombre_dataset']
+            datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', nombre_dataset)
+            self.n_dataset = datos['nombre_dataset']
             print('version',datos['version'])
             #print(datos)
             if datos:
@@ -370,7 +374,7 @@ class MLearningService:
                 #print(df)
                 print("-------------------------------------------")
                 #print("CODIFICAR")
-                df = self.dataframe_service.codificar_valores_cat(df, entrenamiento, self.nombre_dataset)
+                df = self.dataframe_service.codificar_valores_cat(df, entrenamiento, self.n_dataset)
                 print("NORMALIZAR")
                 dataNumerica = self.dataframe_service.normalizar_informacion(dataframe=df, tipo=entrenamiento.normalizacion, objetivo_y= entrenamiento.objetivo_y)
                 #print(df)
@@ -392,10 +396,10 @@ class MLearningService:
     técnica especificada en entrenamiento.tecnica. Si la técnica es "hold-out", realiza una partición del dataset y entrena un modelo de SVM. 
     Si la técnica es "cross-validation", entrena un modelo de SVM con validación cruzada. Guarda la información del modelo y retorna las métricas.
     '''
-    def svm(self, entrenamiento: InfoEntrenamiento):
-        validaciones = self.validaciones(entrenamiento)
+    def svm(self, entrenamiento: InfoEntrenamiento, nombre_dataset):
+        validaciones = self.validaciones(entrenamiento, nombre_dataset)
         if validaciones is True:
-            dataframe = self.preparacion_dataframe(entrenamiento)
+            dataframe = self.preparacion_dataframe(entrenamiento, nombre_dataset)
             if dataframe is not None:
                 self.determinar_x_y(dataframe, entrenamiento.columnas_x, entrenamiento.objetivo_y)
                 if entrenamiento.tecnica == "hold-out":
@@ -431,9 +435,9 @@ class MLearningService:
     def guardar_info_modelos(self, nombre_modelo, normalizacion, tecnica, metricas, matriz):
         fecha_actual = datetime.datetime.now().strftime('%d-%m-%Y')
         if matriz is not None:
-            info = {'fecha':fecha_actual,"nombre_dataset":self.nombre_dataset, 'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
+            info = {'fecha':fecha_actual,"nombre_dataset":self.n_dataset, 'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas, 'matriz_confusion': matriz}
         else:    
-            info = {'fecha':fecha_actual,"nombre_dataset":self.nombre_dataset, 'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
+            info = {'fecha':fecha_actual,"nombre_dataset":self.n_dataset, 'nombre_algoritmo': nombre_modelo, 'normalizacion': normalizacion, 'tecnica': tecnica,'metricas': metricas}
         id = self.mongo_service.guardar_json_metricas(info, 'InformacionModelos')
         print("ID ", id)
 
@@ -513,9 +517,9 @@ class MLearningService:
             #print(matrizKNN)
             sb.heatmap(matrizKNN, annot=True, cmap="Blues")
             plt.title(f"Matriz de Confusión {nombre_modelo} - Hold-Out")
-            ruta_guardado = "app/files/imgs/modelos/matrices_correlacion/"
+            ruta_guardado = "app/files/imgs/modelos/matrices-confusion/"
             os.makedirs(ruta_guardado, exist_ok=True)
-            plt.savefig(os.path.join(ruta_guardado, f"{nombre_modelo}-ho-matriz_confusion.png"))
+            plt.savefig(os.path.join(ruta_guardado, f"{self.n_dataset}-{nombre_modelo}-ho-matriz_confusion.png"))
             plt.close()
             return matrizKNN
         except Exception as e:
@@ -525,8 +529,8 @@ class MLearningService:
     evalúa el overfitting y underfitting de un modelo.
     '''
     def identificar_overffing_underffing(self, modelo):
-         print("///////////777")
-         print("IDENTIFICAR OVERFITTING Y UNDERFITTING")
+        #  print("///////////777")
+        #  print("IDENTIFICAR OVERFITTING Y UNDERFITTING")
          scores = cross_val_score(modelo, self.x, self.y, cv=5)
 
          # calcular la media y la desviación estándar de las puntuaciones de precisión
@@ -635,9 +639,9 @@ class MLearningService:
         #plt.figure(figsize=(8, 6))
         sb.heatmap(matriz_confusion, annot=True, fmt='d', cmap='Blues')
         plt.title(f"Matriz de Confusión {nombre_modelo} - Validación Cruzada")
-        ruta_guardado = "app/files/imgs/modelos/matrices_correlacion/"
+        ruta_guardado = "app/files/imgs/modelos/matrices-confusion/"
         os.makedirs(ruta_guardado, exist_ok=True)
-        plt.savefig(os.path.join(ruta_guardado, f"{nombre_modelo}-cv-matriz_confusion.png"))
+        plt.savefig(os.path.join(ruta_guardado, f"{self.n_dataset}-{nombre_modelo}-cv-matriz_confusion.png"))
         plt.close()
         # plt.xlabel("Predicciones")
         # plt.ylabel("Etiquetas Verdaderas")
@@ -654,7 +658,7 @@ class MLearningService:
            ruta_directorio = f'app/files/modelos'
            if not os.path.exists(ruta_directorio):
             os.makedirs(ruta_directorio)
-           ruta_modelo = os.path.join(ruta_directorio, f'{self.nombre_dataset}-{nombre_modelo}.pkl')
+           ruta_modelo = os.path.join(ruta_directorio, f'{self.n_dataset}-{nombre_modelo}.pkl')
            with open(ruta_modelo, 'wb') as archivo:
                 pickle.dump(modelo, archivo)
         except Exception as e:
@@ -705,7 +709,7 @@ class MLearningService:
                                     break            
                         return f"La predicción es: {prediccion}"
                     else:
-                        return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}"
+                        return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo} del dataset {nombre_dataset}"
                     
                 else:
                     return f"Los valores a predecir debe tener las columnas que se especificaron como x para entrenar el algoritmo {datos['x']}"

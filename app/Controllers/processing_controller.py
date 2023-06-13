@@ -45,9 +45,9 @@ class ProcessingController:
             return self.utils.prueba(msg=f'Error al obtener los tipos de datos: {str(e)}'), 500
 
  # Genera imágenes de análisis y devuelve un mensaje de éxito con las ubicaciones de las imágenes y un código de estado
-    def generar_imagenes_analisis(self):
+    def generar_imagenes_analisis(self, nombre_dataset):
         try: 
-            ubicaciones = self.processing_service.generar_img_analisis()
+            ubicaciones = self.processing_service.generar_img_analisis(nombre_dataset)
             if ubicaciones:
                 return  (self.utils.prueba(msg='Se generaron las imagenes de análisis', datos= ubicaciones)), 200
             return (self.utils.prueba(msg='No hay tipos de datos')), 200
@@ -55,15 +55,15 @@ class ProcessingController:
             return self.utils.prueba(msg=f'Error al obtener los tipos de datos: {str(e)}'), 500
         
 # Obtiene una imagen de histograma  y devuelve la imagen obtenida.
-    async def obtener_histograma(self):
-            return await self.processing_service.obtener_imagen_histograma()
+    async def obtener_histograma(self, nombre_dataset):
+            return await self.processing_service.obtener_imagen_histograma(nombre_dataset)
 
   # Obtiene una imagen de matriz de correlación y devuelve la imagen obtenida.       
-    async def obtener_matriz_correlacion(self):
-            return self.processing_service.obtener_imagen_matriz()
+    async def obtener_matriz_correlacion(self, nombre_dataset):
+            return self.processing_service.obtener_imagen_matriz(nombre_dataset)
   # Obtiene la última matriz de confusión de un algoritmo utilizando el nombre del modelo y devuelve la matriz obtenida.
-    async def obtener_matriz_confusion(self, nombre_modelo):
-        return self.processing_service.obtener_ultima_matriz_confusion_algoritmo(nombre_modelo)
+    async def obtener_matriz_confusion(self, nombre_modelo, nombre_dataset):
+        return self.processing_service.obtener_ultima_matriz_confusion_algoritmo(nombre_modelo, nombre_dataset)
 
 # Obtiene las metricas de un algoritmo entrenado
     def metricas_algoritmos_entrenados(self, nombre_dataset):
