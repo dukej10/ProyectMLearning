@@ -30,7 +30,7 @@ class ProcessingService:
         try:
             if self.file_service.verificar_dataset(nombre_dataset) is False:
                 return f"No existe el dataset {nombre_dataset}"
-            datos = self.mongo_service.obtener_ultimo_registro("Dataset",nombre_dataset=nombre_dataset ) 
+            datos = self.mongo_service.obtener_ultimo_registro_por_nombre("Dataset",nombre=nombre_dataset ) 
             ruta_archivo = self.file_service.obtener_ultimo_archivo("sets")
             # Lee el archivo Excel o utiliza tu DataFrame existente
             nombre_archivo = os.path.basename(ruta_archivo)
@@ -53,7 +53,7 @@ class ProcessingService:
                         print("Se han descartado las columnas con valores nulos.")
                         # Guarda una copia del DataFrame modificado en un archivo Excel
                     msg= self.file_service._copia_excel(df, ruta_archivo, "descarte-")
-                    self.file_service.guardar_archivo_json("descarte", nombre_archivo, 'cleanData', 'Dataset')
+                    self.file_service.guardar_archivo_json("descarte", nombre_archivo, 'cleanData', 'Dataset', nombre_dataset)
                     return self.utils.prueba( msg=msg)
                else:
                     print("No hay columnas con valores nulos.")
@@ -129,7 +129,7 @@ class ProcessingService:
         try:
             if self.file_service.verificar_dataset(nombre_dataset) is False:
                 return f"No existe el dataset {nombre_dataset}"
-            datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', nombre_dataset)    
+            datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', nombre=nombre_dataset)    
             if datos:
                 titulos = datos["titulos"]
                 valores = datos['valores']
@@ -237,7 +237,7 @@ class ProcessingService:
     def obtener_ultima_matriz_confusion_algoritmo(self,nombre:str, nombre_dataset):
         try:
             if self.file_service.verificar_dataset(nombre_dataset) is False:
-                return f"No existe el dataset {nombre_dataset}"
+                return {'mensaje':f'No existe un dataset relacionado con el nombre: {nombre_dataset}'}, 404
             if  self.utils.arreglar_nombre(nombre) == 'REGRESIONLOGISTICA':
                  nombre = 'reglog'
             elif self.utils.arreglar_nombre(nombre) == 'KNN':
@@ -292,7 +292,7 @@ class ProcessingService:
     async def obtener_imagen_histograma(self, nombre_dataset):
         try:
             if self.file_service.verificar_dataset(nombre_dataset) is False:
-                return f"No existe el dataset {nombre_dataset}"
+                return {'mensaje':f'No existe un dataset relacionado con el nombre: {nombre_dataset}'}, 404
             nombre_dataset = nombre_dataset.lower()
             img = self._obtener_imagen(f"imgs/histogramas/{nombre_dataset}-histogramas")
             # print(f'IMAGEN: {img}')
