@@ -26,16 +26,18 @@ class MongoDBService:
             if coleccion == 'RepresentacionCodificacion':
                 existe_registro = self.collection.find_one({
                     "nombre_algoritmo": datos_json['nombre_algoritmo'],
+                    "nombre_dataset": datos_json['nombre_dataset']
                 })
             elif coleccion == 'Dataset':
                 existe_registro = self.collection.find_one({
                     "nombreDoc": datos_json['nombreDoc'],
-                    "version": datos_json['version']
+                    "version": datos_json['version'],
+                    "nombre_dataset": datos_json['nombre_dataset']
                 })
             
             if existe_registro:
                if coleccion == 'RepresentacionCodificacion':
-                    self.collection.delete_one({"nombre_algoritmo": datos_json['nombre_algoritmo']})
+                    self.collection.delete_one({"nombre_algoritmo": datos_json['nombre_algoritmo'], "nombre_dataset": datos_json['nombre_dataset']})
                elif coleccion == 'Dataset':
                     self.collection.delete_one({"nombreDoc": datos_json['nombreDoc'], "version": datos_json['version']})
             
@@ -60,7 +62,8 @@ class MongoDBService:
                 "nombre_algoritmo": datos_json['nombre_algoritmo'],
                 "normalizacion": datos_json['normalizacion'],
                 "tecnica": datos_json['tecnica'],
-                "fecha": datos_json['fecha']
+                "fecha": datos_json['fecha'],
+                "nombre_dataset": datos_json['nombre_dataset']
             })
             
             if existe_registro:
@@ -69,7 +72,8 @@ class MongoDBService:
                         "nombre_algoritmo": datos_json['nombre_algoritmo'],
                         "normalizacion": datos_json['normalizacion'],
                         "tecnica": datos_json['tecnica'],
-                        "fecha": datos_json['fecha']
+                        "fecha": datos_json['fecha'],
+                        "nombre_dataset": datos_json['nombre_dataset']
 
                     })
 
@@ -87,7 +91,10 @@ class MongoDBService:
     def obtener_ultimo_registro(self, coleccion, nombre_dataset):
         try:
             self.collection = self.db[coleccion]
-            result = self.collection.find_one(sort=[('_id', -1)])
+            regex_pattern = f".*{re.escape(nombre_dataset)}.*"
+            query = {"nombre_dataset": {"$regex": regex_pattern, "$options": "i"}}
+            sort_query = [('_id', -1)]
+            result = self.collection.find_one(query, sort=sort_query)
             #print(f'JSON obtenido en MongoDB\n : {str(result)}')
             # print(type(result))
             return result
@@ -102,7 +109,7 @@ class MongoDBService:
             query = {"nombre_dataset": {"$regex": regex_pattern, "$options": "i"}}
             sort_query = [('_id', -1)]
             result = self.collection.find_one(query, sort=sort_query)
-            # print(f'JSON obtenido en MongoDB\n : {str(result)}')
+            print(f'JSON obtenido en MongoDB\n : {str(result)}')
             # print(type(result))
             return result
         except Exception as e:
