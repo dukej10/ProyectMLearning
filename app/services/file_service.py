@@ -69,7 +69,7 @@ class FileService:
                 archivo = glob.glob(os.path.join(ruta_carpeta, '*.xlsx')) + glob.glob(os.path.join(ruta_carpeta, '*.csv'))
             if archivo:
                 archivo_mas_reciente = max(archivo, key=os.path.getctime)
-                print(archivo_mas_reciente)
+                # print(archivo_mas_reciente)
                 archivo_mas_reciente = archivo_mas_reciente.replace('/', '\\')
                 return archivo_mas_reciente
             else:
@@ -78,14 +78,24 @@ class FileService:
             print(f'Error al obtener el ultimo archivo: {str(e)}')
             return None
         
-
-    def verificar_dataset(self, nombre_dataset):
+    '''
+    Verifica que el dataset elegido exista en la base de datos.
+    '''
+    def verificar_dataset(self, nombre_dataset:str):
         datasets = self.mongo_service.obtener_nombres_dataset('Dataset')
-        for elemento in datasets:
-            if nombre_dataset in elemento:
-                # Realiza las acciones adicionales que necesites
-                return True
+        if datasets:
+            for elemento in datasets:
+                if nombre_dataset.lower() in elemento or nombre_dataset.upper() in elemento or nombre_dataset.capitalize() in elemento:
+                    return True
+        print('No se encontrón datasets')
         return False
+
+
+    def obtener_datasets(self):
+        datasets = self.mongo_service.obtener_nombres_dataset('Dataset')
+        if datasets:
+            return datasets
+        return None
 
 
     '''
@@ -125,7 +135,7 @@ class FileService:
         try:
             json = self.convertir_archivo_a_json(version, filename, ubicacion)
             if json:
-                self.mongo_service.guardar_json(json, coleccion )
+                self.mongo_service.guardar_json(json, coleccion)
                 # print("ME CONECTÉ")
                 print('Archivo JSON guardado correctamente.')
             else: 

@@ -27,14 +27,21 @@ clase que maneja todas las rutas de nuestra API
 async def get_todos():
     return FileResponse("app/templates/index.html")
 
+@todo_api_router.get("/datasets", description="Obtiene los datasets cargados en la aplicación")
+async def get_datasets():
+    return file_controller.obtener_datasets()
+
 #ruta que me trae el servicio de histograma
-@todo_api_router.get("/histograma")
+@todo_api_router.get("/histograma", description="Obtiene el histograma de las variables numéricas del dataset")
 async def get_histogram(nombre_dataset: str):
     img_path =  await processing_controller.obtener_histograma(nombre_dataset)
-    return FileResponse(img_path)
+    if isinstance(img_path, str):
+        return FileResponse(img_path)
+    else:
+       return img_path
 
 #ruta que usa el servicio de matriz de correlaccion
-@todo_api_router.get("/matriz-correlacion")
+@todo_api_router.get("/matriz-correlacion", description="Obtiene la matriz de correlacción de las variables numéricas del dataset")
 async def get_matriz_correlacion(nombre_dataset:str):
     img_path =  await processing_controller.obtener_matriz_correlacion(nombre_dataset)
     if isinstance(img_path, str):
@@ -43,12 +50,12 @@ async def get_matriz_correlacion(nombre_dataset:str):
        return img_path
     
 #metodo que impelementa el servicio de descarte
-@todo_api_router.get('/descarte')
+@todo_api_router.get('/descarte', description="Utilizar descarte como técnica de tratamiento de datos faltantes del dataset " )
 def descarte(nombre_dataset: str):
     return processing_controller.descarte(nombre_dataset)
 
 #ruta que maneja el servicio de imputacion
-@todo_api_router.get('/imputacion')
+@todo_api_router.get('/imputacion',description="Utilizar imputación como técnica de tratamiento de datos faltantes del dataset ")
 def imputacion(nombre_dataset: str):
     return processing_controller.imputation_data(nombre_dataset)
 
@@ -90,7 +97,7 @@ async def matriz_confusional(nombre_dataset: str,nombre_algoritmo: str):
         return FileResponse(img_path)
     else:
        return img_path
-#ruta para obtener la descripcion de los algoritmos entrenados
+#ruta para obtener la description de los algoritmos entrenados
 @todo_api_router.get("/metricas-algoritmos-entrenados", description="Permite obtener las métricas que obtuvieron los algoritmos entrenados")
 async def metricas_algoritmos_entrenados(nombre_dataset: str):
     return processing_controller.metricas_algoritmos_entrenados(nombre_dataset=nombre_dataset)
