@@ -64,7 +64,7 @@ class FileService:
         try: 
             ruta_carpeta = os.path.join('app','files', ubicacion)
             if 'imgs' in ubicacion:
-                archivo = glob.glob(os.path.join(ruta_carpeta, '*.png')) + glob.glob(os.path.join(ruta_carpeta, '*.jpg'))
+                archivo = glob.glob(ruta_carpeta + '.png') + glob.glob(ruta_carpeta + '.jpg')
             else:
                 archivo = glob.glob(os.path.join(ruta_carpeta, '*.xlsx')) + glob.glob(os.path.join(ruta_carpeta, '*.csv'))
             if archivo:
@@ -77,6 +77,16 @@ class FileService:
         except FileNotFoundError as e:
             print(f'Error al obtener el ultimo archivo: {str(e)}')
             return None
+        
+
+    def verificar_dataset(self, nombre_dataset):
+        datasets = self.mongo_service.obtener_nombres_dataset('Dataset')
+        for elemento in datasets:
+            if nombre_dataset in elemento:
+                # Realiza las acciones adicionales que necesites
+                return True
+        return False
+
 
     '''
     Convierte el archivo más reciente en la ubicación especificada (excel o csv) a un objeto JSON. Lee los datos del archivo utilizando pandas 
