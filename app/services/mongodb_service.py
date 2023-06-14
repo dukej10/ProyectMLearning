@@ -109,7 +109,7 @@ class MongoDBService:
             query = {"nombre_dataset": {"$regex": regex_pattern, "$options": "i"}}
             sort_query = [('_id', -1)]
             result = self.collection.find_one(query, sort=sort_query)
-            print(f'JSON obtenido en MongoDB\n : {str(result)}')
+            # print(f'JSON obtenido en MongoDB\n : {str(result)}')
             # print(type(result))
             return result
         except Exception as e:
