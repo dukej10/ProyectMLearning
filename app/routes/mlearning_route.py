@@ -23,7 +23,7 @@ clase que maneja todas las rutas de nuestra API
 
 
 #ruta para el index de la api
-@todo_api_router.get("/")
+@todo_api_router.get("/", description="Obtiene el index de la aplicación, para mostrar los gráficos")
 async def get_todos():
     return FileResponse("app/templates/index.html")
 
