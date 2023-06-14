@@ -177,7 +177,7 @@ class ProcessingService:
 
                 # Obtener las columnas numéricas del DataFrame
                 numerico = df.select_dtypes(np.number)
-                self._generate_histograma(numerico, nombre_dataset)
+                self._generate_histograma(numerico, nombre_dataset.lower())
                 
                 ubicacion_histograma = self.file_service.obtener_ultimo_archivo(f"imgs/histogramas/{nombre_dataset}-histogramas")
                 ubicacion_matriz = self.file_service.obtener_ultimo_archivo(f"imgs//matriz_correlacion/{nombre_dataset}-matriz_correlacion")
