@@ -76,6 +76,7 @@ class MLearningService:
         self.processing_service = ProcessingService()
         self.disponibles = None
         self.n_dataset = ""
+        self.file_service = FileService()
 
 
     '''
@@ -141,13 +142,13 @@ class MLearningService:
                         if  matriz is None:
                             return "Error al obtener la matriz de confusión"
                         metricas =self.metricas_hold_out()
-                        self.guardar_info_modelos( 'knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                        self.guardar_info_modelos( 'KNN', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                         return metricas
                     elif entrenamiento.tecnica == "cross-validation":
                         #print("cantidad", entrenamiento.cantidad)
                         self.modeloKNN = KNeighborsClassifier(n_neighbors=self.find_best_n_neighbors())
                         metricas, matriz = self.validacion_cruzada(self.modeloKNN, entrenamiento.cantidad, 'knn')
-                        self.guardar_info_modelos('knn', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                        self.guardar_info_modelos('KNN', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                         return metricas
                 else:
                     return "Error con la preparación del dataframe"
@@ -209,12 +210,12 @@ class MLearningService:
                     if matriz is None:
                         return "error"
                     metricas = self.metricas_hold_out()
-                    self.guardar_info_modelos('naive_bayes', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    self.guardar_info_modelos('Naive Bayes', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     modelo = GaussianNB()
                     metricas, matriz = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'naive_bayes')
-                    self.guardar_info_modelos('naive_bayes', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    self.guardar_info_modelos('Naive Bayes', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
             else:
                 return "Error con la preparación del dataframe"
@@ -253,11 +254,11 @@ class MLearningService:
                     if  matriz is None:
                             return "Error al obtener la matriz de confusión"
                     metricas =  self.metricas_hold_out()
-                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    self.guardar_info_modelos('Árbol de decisión', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
                 elif entrenamiento.tecnica == "cross-validation":
-                    metricas = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'arbol_decision')
-                    self.guardar_info_modelos('arbol_decision', entrenamiento.normalizacion, entrenamiento.tecnica, metricas)
+                    metricas, matriz = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'arbol_decision')
+                    self.guardar_info_modelos('Árbol de decisión', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
             else:
                 return "Error con la preparación del dataframe"
@@ -284,12 +285,12 @@ class MLearningService:
                     #if self.obtener_matriz_confusion('regresion_lineal') is None:
                         #return "error"
                     metricas = self.metricas_hold_out_regresionLineal()
-                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, None)
+                    self.guardar_info_modelos('Regresión Líneal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, None)
                     return metricas
                 elif entrenamiento.tecnica == "cross-validation":
                     modelo = LinearRegression()
                     metricas = self.validacion_cruzada_regresionLineal(modelo, entrenamiento.cantidad)
-                    self.guardar_info_modelos('regresion_lineal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, None)
+                    self.guardar_info_modelos('Regresión Líneal', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, None)
                     return metricas
             else:
                 return "Error con la preparación del dataframe"
@@ -328,9 +329,9 @@ class MLearningService:
         # Guardar el modelo entrenado
         self.guardar_modelo(modelo, 'regresion_lineal')
 
-        return {'Mean Squared Error (MSE)': list(mse_scores), 
-                'Root Mean Squared Error (RMSE)': list(rmse_scores), 
-                'R-squared (R2)': list(r2_scores)}
+        return {'Mean Squared Error (MSE)': mse_scores.mean(), 
+                'Root Mean Squared Error (RMSE)': rmse_scores.mean(), 
+                'R-squared (R2)': r2_scores.mean()}
 
         
  
@@ -409,14 +410,12 @@ class MLearningService:
                     if matriz is None:
                             return "Error al obtener la matriz de confusión"
                     metricas = self.metricas_hold_out()
-                    self.guardar_info_modelos('svm', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    self.guardar_info_modelos('Máquinas de soporte vectorial (SVM)', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
                 elif entrenamiento.tecnica == "cross-validation":
-                    scaler = StandardScaler()
-                    self.XTrain = scaler.fit_transform(self.XTrain)
                     modelo = SVC(C=1.0, kernel='rbf', gamma='scale')
                     metricas, matriz = self.validacion_cruzada(modelo, entrenamiento.cantidad, 'svm')
-                    self.guardar_info_modelos('svm', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
+                    self.guardar_info_modelos('Máquinas de soporte vectorial (SVM)', entrenamiento.normalizacion, entrenamiento.tecnica, metricas, matriz.tolist())
                     return metricas
             else:
                 return "Error con la preparación del dataframe"
@@ -603,7 +602,7 @@ class MLearningService:
             'recall': 'recall_macro',
             'f1': 'f1_macro'
         }
-    
+        print("Tipo de dato: ",type(self.x))
         # Obtener las métricas para cada pliegue
         resultados = cross_validate(modelo, self.x, self.y, cv=cv, scoring=scoring)
 
@@ -755,7 +754,7 @@ class MLearningService:
                 patron = f'{nombre_dataset}*svm.pkl'
                 ruta= os.path.join(ruta_modelo, patron)
             elif nombre_algoritmo == 'naivebayes':
-                patron = f'{nombre_dataset}*naivebayes.pkl'
+                patron = f'{nombre_dataset}*naive_bayes.pkl'
                 ruta= os.path.join(ruta_modelo, patron)
             elif nombre_algoritmo == 'regresionlogistica':
                 patron = f'{nombre_dataset}*reglog.pkl'
