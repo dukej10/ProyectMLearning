@@ -668,6 +668,8 @@ class MLearningService:
     ''' 
     def prediccion(self, prediccion: PrediccionModel, nombre_dataset):
         try:
+            if self.file_service.verificar_dataset(nombre_dataset) is False:
+                return self.utils.prueba(msg=f"No existe el dataset {nombre_dataset}")
             datos = self.mongo_service.obtener_datos_algoritmo('RepresentacionCodificacion', prediccion.algoritmo,nombre_dataset )
             
             
@@ -698,18 +700,17 @@ class MLearningService:
                             if data["valor_codificado"] == round(prediccion[0]):
                                     prediccion = data["valor_original"]
                                     break            
-                        return f"La predicción es: {prediccion}"
+                        return self.utils.prueba(msg=f"La predicción es: {prediccion}")
                     else:
-                        return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo} del dataset {nombre_dataset}"
+                        return self.utils.prueba(msg=f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo} del dataset {nombre_dataset}")    
                     
                 else:
-                    return f"Los valores a predecir debe tener las columnas que se especificaron como x para entrenar el algoritmo {datos['x']}"
-                
+                    return self.utils.prueba(msg=f"Los valores a predecir debe tener las columnas que se especificaron como x para entrenar el algoritmo {datos['x']}")
 
             else:
-                return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}"
+                return self.utils.prueba(msg=f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}")
         except FileNotFoundError as e:
-            return f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}"
+            return self.utils.prueba(msg=f"No se encuentra el modelo para el algoritmo {prediccion.algoritmo}")
     
 
     ''''
