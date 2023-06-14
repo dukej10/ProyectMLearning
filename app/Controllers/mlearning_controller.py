@@ -19,24 +19,43 @@ class MLearningController:
         
         entrenamiento.nombre_algoritmo = self.utils.arreglar_nombre(entrenamiento.nombre_algoritmo)
         if entrenamiento.nombre_algoritmo == "KNN":
-            return self.utils.prueba(msg="Métricas algormitmo KNN",datos=self.mlearning_service.knn(entrenamiento, nombre_dataset))
+            respuesta = self.mlearning_service.knn(entrenamiento, nombre_dataset)
+            if isinstance(respuesta, str): 
+                return self.utils.prueba(msg=respuesta)
+            return self.utils.prueba(msg="Métricas algormitmo KNN",datos=respuesta)
         
 
         elif entrenamiento.nombre_algoritmo == "NAIVEBAYES":
-            return self.utils.prueba(msg="Métricas algoritmo de Naive Bayes ", datos = self.mlearning_service.naive_bayes(entrenamiento, nombre_dataset))
+            respuesta = self.mlearning_service.naive_bayes(entrenamiento, nombre_dataset)
+            if isinstance(respuesta, str): 
+                return self.utils.prueba(msg=respuesta)
+            return self.utils.prueba(msg="Métricas algoritmo de Naive Bayes ", datos = respuesta)
         
         elif entrenamiento.nombre_algoritmo == "REGRESIONLOGISTICA":
-            return self.utils.prueba(msg="Métricas algormitmo Regresion Logistica",datos=self.mlearning_service.regresion_logistica(entrenamiento, nombre_dataset))
-        elif entrenamiento.nombre_algoritmo == "SVM":
-            return self.utils.prueba(msg="Métricas algoritmo de Maquinas de soporte vectorial SVM ", datos = self.mlearning_service.svm(entrenamiento, nombre_dataset))
+            respuesta = self.mlearning_service.regresion_logistica(entrenamiento, nombre_dataset)
+            if isinstance(respuesta, str):
+                return self.utils.prueba(msg=respuesta)
+            return self.utils.prueba(msg="Métricas algormitmo Regresion Logistica",datos=respuesta)
+        elif entrenamiento.nombre_algoritmo == "SVM" or entrenamiento.nombre_algoritmo == "MAQUINASDESOPORTEVECTORIAL":
+            respuesta = self.mlearning_service.svm(entrenamiento, nombre_dataset)
+            if isinstance(respuesta, str):
+                return self.utils.prueba(msg=respuesta)
+            return self.utils.prueba(msg="Métricas algoritmo de Maquinas de soporte vectorial SVM ", datos = respuesta)
         
         elif entrenamiento.nombre_algoritmo == "ARBOLDEDECISION":
-            return self.utils.prueba(msg="Métricas algormitmo Regresion Árbol de decisión",datos=self.mlearning_service.arbol_decision(entrenamiento, nombre_dataset))
+            respuesta = self.mlearning_service.arbol_decision(entrenamiento, nombre_dataset)
+            if isinstance(respuesta, str):
+                return self.utils.prueba(msg=respuesta)
+            return self.utils.prueba(msg="Métricas algormitmo Regresion Árbol de decisión",datos=respuesta)
         
         elif entrenamiento.nombre_algoritmo == "REGRESIONLINEAL":
-            return self.utils.prueba(msg="Métricas algormitmo Regresion Lineal",datos=self.mlearning_service.regresion_lineal(entrenamiento, nombre_dataset))
+            respuesta = self.mlearning_service.regresion_lineal(entrenamiento, nombre_dataset)
+            if isinstance(respuesta, str):
+                return self.utils.prueba(msg=respuesta)
+            return self.utils.prueba(msg="Métricas algormitmo Regresion Lineal",datos=respuesta)
         else:
-            return "Algoritmo no encontrado"
+            return self.utils.prueba(msg="Algoritmo no encontrado")
+
 
 #metodo que iniciar el servicio de prediccion   
     def prediccion(self, prediccion: PrediccionModel, nombre_dataset):
