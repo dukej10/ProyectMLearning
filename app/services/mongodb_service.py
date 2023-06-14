@@ -121,8 +121,8 @@ class MongoDBService:
     '''
     def obtener_datos_algoritmo(self, coleccion, nombre_algoritmo, nombre_dataset):
         try:
-            print(nombre_dataset)
-            print(nombre_algoritmo)
+            # print(nombre_dataset)
+            # print(nombre_algoritmo)
             self.collection = self.db[coleccion]
             regex_pattern = f".*{re.escape(nombre_dataset)}.*"
             query = {"nombre_dataset": {"$regex": regex_pattern, "$options": "i"},"nombre_algoritmo": nombre_algoritmo.upper()}
