@@ -75,7 +75,7 @@ async def upload_file(file: UploadFile = File(...)):
 async def get_types(nombre_dataset):
     return processing_controller.get_types(nombre_dataset)
 #ruta para el servicio general de entrenamiento
-@todo_api_router.post("/entrenamiento", description="Entrenamiento de algoritmo \n  nombre_algoritmo: nombre del algoritmo a utilizar, columnas_x: variables a usar para x, objetivo_y: columna objetivo, tecnica: hold-out o cross-validation, cantidad: % partición dataset o número de folds para cv, normalizacion: min-max o standarscaler")
+@todo_api_router.post("/entrenamiento", description="Entrenamiento de algoritmo \n Algoritmos disponibles: K-Nearest Neighbors(knn),Árboles de Decisión (arbol de decision), Máquinas de soporte vectorial (svm), Naive Bayes (naive bayes), Regresión Líneal (regresion lineal) y Regresión Logística (regresion logistica) \n nombre_algoritmo: nombre del algoritmo a utilizar, columnas_x: variables a usar para x, objetivo_y: columna objetivo, tecnica: hold-out o cross-validation, cantidad: % partición dataset o número de folds para cv, normalizacion: min-max o standarscaler")
 async def entrenamiento_algoritmo(nombre_dataset:str,entrenamiento: InfoEntrenamiento= Body(..., example={
   "nombre_algoritmo": "knn",
   "columnas_x": [
@@ -86,7 +86,7 @@ async def entrenamiento_algoritmo(nombre_dataset:str,entrenamiento: InfoEntrenam
   "cantidad": 20,
   "normalizacion": "min-max"
 })):
-   print(entrenamiento)
+#    print(entrenamiento)
    return mlearning_controller.algoritmos(entrenamiento, nombre_dataset)
 
 #ruta para el servicio de matriz de confusion
