@@ -1,7 +1,10 @@
 import glob
 import os
 from flask import send_file
+import matplotlib
 from matplotlib import pyplot as plt
+matplotlib.use('Agg')
+
 import numpy as np
 import pandas as pd
 import seaborn as sb
@@ -163,7 +166,7 @@ class ProcessingService:
     def generar_img_analisis(self, nombre_dataset):
         try:
             if self.file_service.verificar_dataset(nombre_dataset) is False:
-                return f"No existe el dataset {nombre_dataset}"
+                return self.utils.prueba(msg=f"No existe el dataset {nombre_dataset}")
             # Lee el archivo Excel o utiliza tu DataFrame existente
             datos = self.mongo_service.obtener_ultimo_registro_por_nombre('Dataset', nombre_dataset)    
             # print(dataframe)
@@ -176,17 +179,24 @@ class ProcessingService:
                 numerico = df.select_dtypes(np.number)
                 self._generate_histograma(numerico, nombre_dataset)
                 
-                ubicacion_histograma = self.file_service.obtener_ultimo_archivo("imgs/histogramas")
-                ubicacion_matriz = self.file_service.obtener_ultimo_archivo("imgs/matriz_correlacion")
+                ubicacion_histograma = self.file_service.obtener_ultimo_archivo(f"imgs/histogramas/{nombre_dataset}-histogramas")
+                ubicacion_matriz = self.file_service.obtener_ultimo_archivo(f"imgs//matriz_correlacion/{nombre_dataset}-matriz_correlacion")
+                print("histograma", ubicacion_histograma)
+
+                print("matriz", ubicacion_matriz)
                 ubicacion_histograma = ubicacion_histograma.replace("/", "\\")
+                print("histograma", ubicacion_histograma)
+
                 ubicacion_matriz = ubicacion_matriz.replace("/", "\\")
+                ubicacion_matriz = ubicacion_matriz.replace("\\\\", "\\")
+                print("matriz", ubicacion_matriz)
                 retorno = f'Ubicación del histograma: {ubicacion_histograma} Ubicación de la matriz de correlación: {ubicacion_matriz}'
                 
-                return retorno
+                return self.utils.prueba(msg=retorno)
             else:
-                return 'No se encontró ningún registro.'
+                return self.utils.prueba(msg=f"No se encuentra un registro en la base de datos.")
         except Exception as e:
-            return f'Error buscar el registro: {str(e)}'
+                return self.utils.prueba(msg=f"Error.{str(e)}")
 
     '''
     Estos son métodos privados utilizados por el método "generar_img_analisis" para generar el histograma y la matriz de correlación, respectivamente.
